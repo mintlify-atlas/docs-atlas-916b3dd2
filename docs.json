@@ -8,10 +8,6 @@
     "dark": "#2E5A8C"
   },
   "favicon": "/favicon.svg",
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
   "navbar": {
     "primary": {
       "type": "github",
@@ -95,7 +91,7 @@
             "pages": [
               "api/take-records/list",
               "api/take-records/create",
-              "api/take-records/update"
+              "api/take-records/delete"
             ]
           }
         ]
