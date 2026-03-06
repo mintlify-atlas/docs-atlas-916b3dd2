@@ -1,0 +1,113 @@
+{
+  "projectType": "saas",
+  "projectName": "NexeCare",
+  "projectDescription": "Healthcare management platform for tracking medication and care schedules for children with multiple disabilities",
+  "theme": "almond",
+  "primaryColor": "#4A90E2",
+  "lightColor": "#7CB8F7",
+  "darkColor": "#2E5A8C",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/medication-management",
+              "features/treatment-tracking",
+              "features/calendar-integration",
+              "features/user-roles"
+            ]
+          },
+          {
+            "group": "User Guides",
+            "pages": [
+              "guides/parents-caregivers",
+              "guides/medical-professionals",
+              "guides/calendar-sync"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/frontend-setup",
+              "deployment/backend-setup",
+              "deployment/database-configuration"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/overview",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Medications",
+            "pages": [
+              "api/medications/list",
+              "api/medications/create",
+              "api/medications/update",
+              "api/medications/delete"
+            ]
+          },
+          {
+            "group": "Treatments",
+            "pages": [
+              "api/treatments/list",
+              "api/treatments/create",
+              "api/treatments/update",
+              "api/treatments/delete"
+            ]
+          },
+          {
+            "group": "Take Records",
+            "pages": [
+              "api/take-records/list",
+              "api/take-records/create",
+              "api/take-records/update"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Medication list management with status tracking",
+    "Treatment scheduling and monitoring",
+    "Google Calendar integration for appointments",
+    "Multi-user support (parents, caregivers, professionals)",
+    "Real-time medication intake tracking",
+    "Child profile management",
+    "Supabase authentication and authorization"
+  ],
+  "publicApiSurface": [
+    "GET /medication",
+    "GET /medication/{id}",
+    "POST /medication",
+    "PUT /medication/{id}",
+    "DELETE /medication/{id}",
+    "GET /treatments",
+    "GET /treatments/{id}",
+    "POST /treatments",
+    "PUT /treatments/{id}",
+    "DELETE /treatments/{id}",
+    "GET /takes",
+    "GET /takes/{id}",
+    "POST /takes",
+    "PUT /takes/{id}"
+  ]
+}
