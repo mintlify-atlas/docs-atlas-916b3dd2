@@ -1,0 +1,190 @@
+---
+title: 'List Medications'
+api: 'GET /medication'
+description: 'Retrieve all medications or a specific medication by ID'
+---
+
+## Get All Medications
+
+Retrieve a list of all medications in the inventory.
+
+### Endpoint
+
+```
+GET /medication
+```
+
+### Response
+
+<ResponseField name="medications" type="array">
+  Array of medication objects
+  
+  <ResponseField name="id" type="integer">
+    Unique identifier for the medication
+  </ResponseField>
+  
+  <ResponseField name="nameMedication" type="string">
+    Name of the medication
+  </ResponseField>
+  
+  <ResponseField name="doseUnit" type="string">
+    Unit of measurement for the dose (e.g., "mg", "ml")
+  </ResponseField>
+  
+  <ResponseField name="type" type="string">
+    Type or category of medication
+  </ResponseField>
+  
+  <ResponseField name="frequency" type="string">
+    Recommended frequency of administration
+  </ResponseField>
+  
+  <ResponseField name="minStock" type="integer">
+    Minimum stock level threshold
+  </ResponseField>
+  
+  <ResponseField name="stock" type="integer">
+    Current stock quantity
+  </ResponseField>
+  
+  <ResponseField name="createdAt" type="date">
+    Timestamp when the medication was created
+  </ResponseField>
+  
+  <ResponseField name="updatedAt" type="date">
+    Timestamp when the medication was last updated
+  </ResponseField>
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8080/medication
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "nameMedication": "Paracetamol",
+    "doseUnit": "mg",
+    "type": "Analgesic",
+    "frequency": "Every 6 hours",
+    "minStock": 20,
+    "stock": 150,
+    "createdAt": "2026-01-15T10:30:00.000+00:00",
+    "updatedAt": "2026-03-01T14:20:00.000+00:00"
+  },
+  {
+    "id": 2,
+    "nameMedication": "Amoxicillin",
+    "doseUnit": "mg",
+    "type": "Antibiotic",
+    "frequency": "Every 8 hours",
+    "minStock": 15,
+    "stock": 75,
+    "createdAt": "2026-01-20T09:15:00.000+00:00",
+    "updatedAt": "2026-02-28T16:45:00.000+00:00"
+  }
+]
+```
+
+### Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Successfully retrieved medications |
+| `204` | No medications found (empty list) |
+
+---
+
+## Get Medication by ID
+
+Retrieve details of a specific medication.
+
+### Endpoint
+
+```
+GET /medication/{id}
+```
+
+### Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the medication
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="integer">
+  Unique identifier for the medication
+</ResponseField>
+
+<ResponseField name="nameMedication" type="string">
+  Name of the medication
+</ResponseField>
+
+<ResponseField name="doseUnit" type="string">
+  Unit of measurement for the dose
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  Type or category of medication
+</ResponseField>
+
+<ResponseField name="frequency" type="string">
+  Recommended frequency of administration
+</ResponseField>
+
+<ResponseField name="minStock" type="integer">
+  Minimum stock level threshold
+</ResponseField>
+
+<ResponseField name="stock" type="integer">
+  Current stock quantity
+</ResponseField>
+
+<ResponseField name="createdAt" type="date">
+  Timestamp when the medication was created
+</ResponseField>
+
+<ResponseField name="updatedAt" type="date">
+  Timestamp when the medication was last updated
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X GET http://localhost:8080/medication/1
+```
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "nameMedication": "Paracetamol",
+  "doseUnit": "mg",
+  "type": "Analgesic",
+  "frequency": "Every 6 hours",
+  "minStock": 20,
+  "stock": 150,
+  "createdAt": "2026-01-15T10:30:00.000+00:00",
+  "updatedAt": "2026-03-01T14:20:00.000+00:00"
+}
+```
+
+### Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Medication found and returned |
+| `204` | Medication not found |
+
+## Related Endpoints
+
+- [Create Medication](/api/medications/create)
+- [Update Medication](/api/medications/update)
+- [Delete Medication](/api/medications/delete)

@@ -1,0 +1,262 @@
+---
+title: 'Backend Setup'
+description: 'Setup and deployment instructions for the NexeCare Spring Boot backend'
+---
+
+## Prerequisites
+
+Before setting up the backend, ensure you have the following installed:
+
+- **Java Development Kit (JDK)**: Version 17 or higher
+- **Apache Maven**: Version 3.8.x or higher
+- **MySQL**: Version 8.0 or higher
+- **Git**: For cloning the repository
+
+Verify your Java and Maven installations:
+
+```bash
+java -version
+mvn -version
+```
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the NexeCare repository and navigate to the backend directory:
+    
+    ```bash
+    git clone <repository-url>
+    cd nexecare/backend/backend
+    ```
+  </Step>
+
+  <Step title="Review project dependencies">
+    The backend is built with Spring Boot 3.5.8 and includes the following key dependencies (from `pom.xml`):
+    
+    **Core Dependencies:**
+    - `spring-boot-starter-data-jpa` - JPA/Hibernate for database operations
+    - `spring-boot-starter-validation` - Bean validation support
+    - `spring-boot-starter-web` - RESTful web services
+    - `mysql-connector-j` - MySQL database driver
+    
+    **Development Tools:**
+    - `spring-boot-devtools` - Hot reload and development utilities
+    - `lombok` - Reduces boilerplate code with annotations
+    - `h2` - In-memory database for testing
+    
+    **Testing:**
+    - `spring-boot-starter-test` - Testing framework with JUnit and Mockito
+  </Step>
+
+  <Step title="Build the project">
+    Use Maven to download dependencies and build the application:
+    
+    ```bash
+    mvn clean install
+    ```
+    
+    This command will:
+    - Download all required dependencies
+    - Compile the Java source code
+    - Run tests
+    - Package the application as a JAR file
+    
+    To skip tests during build:
+    
+    ```bash
+    mvn clean install -DskipTests
+    ```
+  </Step>
+
+  <Step title="Configure database connection">
+    Update `src/main/resources/application.properties` with your MySQL credentials.
+    
+    <Warning>
+      The current `application.properties` file contains hardcoded database credentials. For production, use environment variables or Spring profiles. See [Database Configuration](/deployment/database-configuration) for details.
+    </Warning>
+  </Step>
+</Steps>
+
+## Spring Boot Configuration
+
+The application configuration is defined in `application.properties`:
+
+```properties
+spring.application.name=backend
+
+# MySQL Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/nexe_care?useSSL=false&serverTimezone=UTC
+spring.datasource.username=root
+spring.datasource.password=uSjIdzYsHTBQ9F2zs0Jc
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate Configuration
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+```
+
+### Configuration Options
+
+| Property | Value | Description |
+|----------|-------|-------------|
+| `spring.application.name` | `backend` | Application identifier |
+| `spring.datasource.url` | JDBC URL | MySQL connection string for `nexe_care` database |
+| `spring.datasource.username` | `root` | Database username |
+| `spring.datasource.password` | Password | Database password (should be externalized) |
+| `spring.jpa.hibernate.ddl-auto` | `update` | Auto-updates database schema based on entity changes |
+| `spring.jpa.show-sql` | `true` | Logs SQL queries to console (disable in production) |
+
+<Warning>
+  **Production Configuration**: 
+  - Set `spring.jpa.show-sql=false` to reduce log verbosity
+  - Consider using `spring.jpa.hibernate.ddl-auto=validate` instead of `update` to prevent automatic schema changes
+  - Use environment variables for sensitive data
+</Warning>
+
+## Running the Application
+
+### Method 1: Using Maven
+
+Run the application directly with Maven:
+
+```bash
+mvn spring-boot:run
+```
+
+### Method 2: Using the JAR file
+
+After building, run the packaged JAR:
+
+```bash
+java -jar target/backend-0.0.1-SNAPSHOT.jar
+```
+
+### Method 3: Using your IDE
+
+Run the main application class directly:
+- **Class**: `com.NexeCare.backend.BackendApplication`
+- **Method**: Right-click and select "Run" or use the run configuration
+
+## Server Configuration
+
+By default, the Spring Boot application runs on **port 8080**.
+
+### Accessing the API
+
+Once running, the REST API will be available at:
+
+```
+http://localhost:8080
+```
+
+### Available Endpoints
+
+The backend provides REST controllers for:
+
+- **Medications**: `/api/medications` - Medication management (MedicationController)
+- **Treatments**: `/api/treatments` - Treatment tracking (TreatmentController)
+- **Take Records**: `/api/takes` - Medication intake records (TakeController)
+
+### Changing the Port
+
+To run on a different port, add this to `application.properties`:
+
+```properties
+server.port=8081
+```
+
+Or specify it at runtime:
+
+```bash
+java -jar target/backend-0.0.1-SNAPSHOT.jar --server.port=8081
+```
+
+## Environment Setup
+
+### Using Environment Variables
+
+For production deployments, externalize configuration using environment variables:
+
+```bash
+export SPRING_DATASOURCE_URL=jdbc:mysql://your-host:3306/nexe_care
+export SPRING_DATASOURCE_USERNAME=your_username
+export SPRING_DATASOURCE_PASSWORD=your_password
+
+java -jar target/backend-0.0.1-SNAPSHOT.jar
+```
+
+### Using Spring Profiles
+
+Create environment-specific configuration files:
+
+- `application-dev.properties` - Development settings
+- `application-prod.properties` - Production settings
+
+Activate a profile:
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=prod
+```
+
+Or with the JAR:
+
+```bash
+java -jar target/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+```
+
+## CORS Configuration
+
+If your frontend runs on a different origin (e.g., `http://localhost:5173`), you'll need to configure CORS. Add a configuration class:
+
+```java
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:5173")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowCredentials(true);
+    }
+}
+```
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 8080 is in use:
+
+```bash
+# Find the process using port 8080
+lsof -i :8080
+
+# Kill the process or change the port
+```
+
+### Database Connection Errors
+
+Verify that:
+1. MySQL server is running: `systemctl status mysql` or `brew services list`
+2. Database `nexe_care` exists: See [Database Configuration](/deployment/database-configuration)
+3. Credentials in `application.properties` are correct
+4. MySQL is accepting connections on port 3306
+
+### Build Failures
+
+Clean and rebuild:
+
+```bash
+mvn clean
+mvn install -U
+```
+
+The `-U` flag forces Maven to update dependencies.
+
+## Next Steps
+
+- Complete [Database Configuration](/deployment/database-configuration) to set up MySQL
+- Configure [Frontend Setup](/deployment/frontend-setup) to connect to this backend
+- Review the entity models (Child, Medication, Treatment, TakeRecord) in the codebase
+- Set up monitoring and logging for production environments

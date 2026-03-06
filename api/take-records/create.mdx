@@ -1,0 +1,108 @@
+---
+title: 'Create Take Record'
+api: 'POST /take'
+description: 'Record a medication administration event'
+---
+
+Create a new record of a medication administration (take) event.
+
+## Endpoint
+
+```
+POST /take
+```
+
+## Request Body
+
+<ParamField body="treatment_id" type="integer" required>
+  ID of the treatment being administered
+</ParamField>
+
+<ParamField body="registeredBy_id" type="integer" required>
+  ID of the person registering the take (tutor or professional)
+</ParamField>
+
+<ParamField body="takeSuccess" type="boolean" required>
+  Whether the medication was successfully administered
+</ParamField>
+
+<ParamField body="observations" type="string" optional>
+  Additional notes or observations about the administration
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="integer">
+  Unique identifier for the newly created take record
+</ResponseField>
+
+<ResponseField name="treatmentId" type="integer">
+  ID of the associated treatment
+</ResponseField>
+
+<ResponseField name="registratorId" type="integer">
+  ID of the person who registered the take
+</ResponseField>
+
+<ResponseField name="date" type="date">
+  Timestamp when the record was created (auto-generated)
+</ResponseField>
+
+<ResponseField name="takeSuccess" type="boolean">
+  Whether the medication was successfully administered
+</ResponseField>
+
+<ResponseField name="observations" type="string">
+  Additional notes or observations about the take
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST http://localhost:8080/take \
+  -H "Content-Type: application/json" \
+  -d '{
+    "treatment_id": 1,
+    "registeredBy_id": 10,
+    "takeSuccess": true,
+    "observations": "Child took medication with water. No issues."
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "id": 4,
+  "treatmentId": 1,
+  "registratorId": 10,
+  "date": "2026-03-06T10:30:45.123+00:00",
+  "takeSuccess": true,
+  "observations": "Child took medication with water. No issues."
+}
+```
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `201` | Take record created successfully |
+
+## Response Headers
+
+The response includes a `Location` header with the URI of the created resource:
+
+```
+Location: /take/4
+```
+
+## Important Notes
+
+<Info>
+  The `date` field is automatically set to the current timestamp when the record is created. You do not need to provide it in the request.
+</Info>
+
+## Related Endpoints
+
+- [List Take Records](/api/take-records/list)
+- [Update Take Record](/api/take-records/update)

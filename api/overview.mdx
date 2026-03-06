@@ -1,0 +1,63 @@
+---
+title: 'API Overview'
+description: 'Introduction to the NexeCare REST API'
+---
+
+## Base URL
+
+The NexeCare API is accessible at:
+
+```
+http://localhost:8080
+```
+
+## Architecture
+
+NexeCare uses a RESTful architecture built with Spring Boot, providing a standardized interface for managing healthcare resources.
+
+## Available Resources
+
+The API provides endpoints for managing three core resources:
+
+### Medications
+Manage medication inventory, dosage information, and stock levels.
+- **Base path:** `/medication`
+- [View Medication Endpoints →](/api/medications/list)
+
+### Treatments
+Track medication treatments assigned to children, including schedules and instructions.
+- **Base path:** `/treatments`
+- [View Treatment Endpoints →](/api/treatments/list)
+
+### Take Records
+Record and monitor medication administration events.
+- **Base path:** `/take`
+- [View Take Record Endpoints →](/api/take-records/list)
+
+## Response Format
+
+All API responses are returned in JSON format with appropriate HTTP status codes.
+
+### Common Status Codes
+
+| Status Code | Meaning | Usage |
+|-------------|---------|-------|
+| `200 OK` | Success | Request completed successfully |
+| `201 Created` | Created | Resource created successfully |
+| `204 No Content` | No content | Request succeeded but no data to return |
+| `404 Not Found` | Not found | Resource does not exist |
+
+## Data Types
+
+The API uses standard JSON data types:
+- **integer** - Whole numbers (e.g., `1`, `100`)
+- **string** - Text values (e.g., `"Aspirin"`)
+- **boolean** - True/false values
+- **date** - ISO 8601 date-time format (e.g., `"2026-03-06T10:30:00.000+00:00"`)
+
+## Next Steps
+
+- Learn about [Authentication](/api/authentication)
+- Explore [Medication endpoints](/api/medications/list)
+- Explore [Treatment endpoints](/api/treatments/list)
+- Explore [Take Record endpoints](/api/take-records/list)

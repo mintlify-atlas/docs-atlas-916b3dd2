@@ -1,0 +1,361 @@
+---
+title: "Guide for Medical Professionals"
+description: "Complete guide for healthcare providers managing patient treatments and prescriptions"
+---
+
+<Note>
+This guide is designed for doctors, nurses, therapists, and other healthcare professionals who prescribe and monitor treatments for children with special needs.
+</Note>
+
+## Overview
+
+As a medical professional, NexeCare allows you to create treatment plans, prescribe medications, and monitor patient adherence from a centralized platform. You can track which medications patients are taking, view adherence patterns, and adjust treatments as needed.
+
+## Getting Started as a Healthcare Provider
+
+<Steps>
+  <Step title="Professional Account Setup">
+    Your Professional account gives you access to patient management features. The Professional model includes:
+    
+    ```java Professional.java
+    @Entity
+    public class Professional {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private int id;
+        private String name;
+        private String surname;
+        private String email;
+    }
+    ```
+    
+    Contact your administrator to set up your professional profile with your credentials.
+  </Step>
+
+  <Step title="Review Patient Profiles">
+    Access the list of children under your care. Each child profile contains:
+    - Basic information (name, address)
+    - Active medications
+    - Current treatments
+    - Medication adherence history
+  </Step>
+
+  <Step title="Create Your First Treatment Plan">
+    Navigate to the treatment management section to begin prescribing medications and creating schedules.
+  </Step>
+</Steps>
+
+## Creating Treatment Plans
+
+Treatment plans link medications to specific children with dosing schedules and duration.
+
+### Treatment Structure
+
+Each treatment includes:
+
+```java Treatment.java
+@Entity
+public class Treatment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    
+    @Column(name = "id_child")
+    private int childId;              // Which child
+    
+    @Column(name = "id_medication")
+    private int medicationId;         // Which medication
+    
+    @Column(name = "start_date")
+    private Date startDate;           // When to begin
+    
+    @Column(name = "end_date")
+    private Date endDate;             // When to end (can be null for ongoing)
+    
+    @Column(name = "specific_dose")
+    private int specificDose;         // Dose amount
+    
+    private String instructions;      // Special instructions
+}
+```
+
+### Creating a New Treatment
+
+<Steps>
+  <Step title="Select the Patient">
+    Choose the child for whom you're prescribing the treatment. The system links treatments to child profiles using the `childId`.
+  </Step>
+
+  <Step title="Choose or Add Medication">
+    Select an existing medication from the database, or add a new one if needed. Each medication has:
+    - Name
+    - Type (tablet, liquid, injection, etc.)
+    - Standard dose unit
+    - Frequency information
+  </Step>
+
+  <Step title="Set Schedule Parameters">
+    Configure the treatment schedule:
+    - **Start date** - When the treatment begins
+    - **End date** - When it ends (leave blank for ongoing treatments)
+    - **Specific dose** - Amount per administration
+    - **Instructions** - Special notes ("Take with food", "Before bedtime", etc.)
+  </Step>
+
+  <Step title="Submit the Treatment">
+    Save the treatment plan. It becomes immediately active and appears in the caregiver's medication list.
+    
+    ```bash
+    POST /treatments
+    Content-Type: application/json
+    
+    {
+      "childId": 1,
+      "medicationId": 5,
+      "startDate": "2026-03-06",
+      "endDate": "2026-04-06",
+      "specificDose": 10,
+      "instructions": "Tomar con alimentos"
+    }
+    ```
+  </Step>
+</Steps>
+
+## Medication Management
+
+### Adding New Medications to the System
+
+When prescribing a medication not yet in the database:
+
+```java Medication.java
+@Entity
+public class Medication {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    private String name;              // Brand or generic name
+    private String dose_unit;         // mg, ml, units, etc.
+    private String type;              // tablet, liquid, injection
+    private String frequency;         // BID, TID, QID, PRN
+    private int stock;                // Current stock level
+    private int minStock;             // Alert threshold
+}
+```
+
+Create medications via the API:
+
+```bash
+POST /medication
+Content-Type: application/json
+
+{
+  "name": "Metformina",
+  "dose_unit": "mg",
+  "type": "tablet",
+  "frequency": "BID",
+  "stock": 60,
+  "minStock": 10
+}
+```
+
+### Updating Medication Information
+
+Modify medication details as needed:
+
+```bash
+PUT /medication/{id}
+Content-Type: application/json
+
+{
+  "name": "Metformina",
+  "dose_unit": "mg",
+  "type": "tablet",
+  "frequency": "TID",
+  "stock": 45,
+  "minStock": 15
+}
+```
+
+## Monitoring Patient Adherence
+
+### Viewing Take Records
+
+Take records track when caregivers administer medications:
+
+```java TakeRecord.java
+@Entity
+public class TakeRecord {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    
+    @Column(name = "id_treatment")
+    private int treatmentId;          // Which treatment
+    
+    @Column(name = "take_date")
+    private Date takeDate;            // When administered
+    
+    private int quantity;             // Amount given
+    
+    @Column(name = "registrator_id")
+    private int registratorId;        // Who administered it
+    
+    private boolean success;          // Was it successfully given?
+}
+```
+
+### Checking Adherence Patterns
+
+Review take records to assess:
+- **Adherence rate** - Percentage of doses taken as prescribed
+- **Timing patterns** - Are doses taken at consistent times?
+- **Missed doses** - Which medications are frequently missed?
+- **Success rate** - How many attempted doses were successful?
+
+Retrieve take records via API:
+
+```bash
+GET /take/{treatmentId}
+```
+
+Response includes all recorded doses for that treatment:
+
+```json
+[
+  {
+    "id": 1,
+    "treatmentId": 5,
+    "takeDate": "2026-03-06T08:00:00Z",
+    "quantity": 10,
+    "registratorId": 2,
+    "success": true
+  },
+  {
+    "id": 2,
+    "treatmentId": 5,
+    "takeDate": "2026-03-06T20:00:00Z",
+    "quantity": 10,
+    "registratorId": 2,
+    "success": true
+  }
+]
+```
+
+## Modifying Treatment Plans
+
+### Adjusting Dosages
+
+Update the treatment if you need to change the dose:
+
+```bash
+PUT /treatments/{id}
+Content-Type: application/json
+
+{
+  "childId": 1,
+  "medicationId": 5,
+  "startDate": "2026-03-06",
+  "endDate": "2026-04-06",
+  "specificDose": 15,
+  "instructions": "Increased dose - take with food"
+}
+```
+
+### Discontinuing Treatments
+
+To stop a treatment:
+
+1. **Option 1**: Set an end date to today's date
+2. **Option 2**: Delete the treatment entirely
+
+```bash
+DELETE /treatments/{id}
+```
+
+<Warning>
+Deleting a treatment removes it from the caregiver's medication list immediately. Set an end date instead if you want to maintain historical records.
+</Warning>
+
+## Working with Caregivers
+
+### Caregiver-Child Relationships
+
+The platform supports multiple caregivers per child through the Tutor_Relation system:
+
+```java Tutor_Relation.java
+@Entity
+public class Tutor_Relation {
+    @EmbeddedId
+    private Tutor_Relation_Id id;     // Composite key (tutor + child)
+    
+    @Column(name = "main_contact")
+    private Boolean mainContact;       // Primary caregiver?
+    
+    private String relationship;       // "parent", "guardian", etc.
+}
+```
+
+This allows:
+- Both parents to access the same child's information
+- Multiple caregivers to track medications
+- Designation of a primary contact
+
+### Communicating Instructions
+
+Use the `instructions` field in treatments to provide critical information:
+- **Timing**: "Take 30 minutes before breakfast"
+- **Food interactions**: "Take with food" or "Avoid dairy products"
+- **Side effects to watch for**: "Monitor for drowsiness"
+- **Emergency instructions**: "Call if fever exceeds 38.5°C"
+
+## Best Practices
+
+<Accordion title="Always Include Complete Instructions">
+The instructions field is crucial for caregivers. Include timing, food interactions, and what to watch for. Don't assume knowledge.
+</Accordion>
+
+<Accordion title="Set Realistic End Dates">
+For treatments with defined durations (e.g., antibiotics), always set end dates. For chronic medications, leave the end date blank.
+</Accordion>
+
+<Accordion title="Review Adherence Regularly">
+Check take records weekly for patients with complex regimens. Poor adherence may indicate issues with side effects, cost, or understanding.
+</Accordion>
+
+<Accordion title="Keep Medication Database Updated">
+When new medications become available or formulations change, update the medication database so caregivers see current information.
+</Accordion>
+
+<Accordion title="Coordinate with Multiple Caregivers">
+If a child has multiple caregivers, ensure all parties understand the treatment plan and know who is responsible for each dose.
+</Accordion>
+
+## API Reference for Integration
+
+For electronic health record (EHR) integration, see the complete API documentation:
+
+<CardGroup cols={2}>
+  <Card title="Medications API" icon="pills" href="/api/medications/list">
+    Create and manage medications
+  </Card>
+  <Card title="Treatments API" icon="calendar-check" href="/api/treatments/list">
+    Prescribe and monitor treatment plans
+  </Card>
+  <Card title="Take Records API" icon="clipboard-check" href="/api/take-records/list">
+    Access adherence data
+  </Card>
+  <Card title="API Overview" icon="code" href="/api/overview">
+    Complete API documentation
+  </Card>
+</CardGroup>
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Treatment Tracking" icon="calendar-check" href="/features/treatment-tracking">
+    Learn about treatment management features
+  </Card>
+  <Card title="Parents & Caregivers Guide" icon="hand-holding-heart" href="/guides/parents-caregivers">
+    Share this with your patients' families
+  </Card>
+</CardGroup>

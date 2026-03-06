@@ -1,0 +1,187 @@
+---
+title: 'Frontend Setup'
+description: 'Setup and deployment instructions for the NexeCare frontend application'
+---
+
+## Prerequisites
+
+Before setting up the frontend, ensure you have the following installed:
+
+- **Node.js**: Version 18.x or higher recommended
+- **npm**: Version 9.x or higher (comes with Node.js)
+- **Git**: For cloning the repository
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the NexeCare repository to your local machine:
+    
+    ```bash
+    git clone <repository-url>
+    cd nexecare/frontend
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all required npm packages:
+    
+    <CodeGroup>
+    ```bash npm
+    npm install
+    ```
+    
+    ```bash yarn
+    yarn install
+    ```
+    
+    ```bash pnpm
+    pnpm install
+    ```
+    </CodeGroup>
+    
+    The frontend uses the following key dependencies:
+    - **React 19.2.0**: UI framework
+    - **Vite 7.2.4**: Build tool and dev server
+    - **React Router Dom 7.9.6**: Client-side routing
+    - **Supabase 2.84.0**: Authentication and backend services
+    - **FullCalendar 6.1.19**: Calendar and scheduling interface
+    - **Tailwind CSS 4.1.17**: Styling framework
+    - **Tabler Icons 3.35.0**: Icon library
+  </Step>
+
+  <Step title="Configure environment variables">
+    The application requires Supabase configuration. Create a `.env` file in the frontend root directory:
+    
+    ```bash
+    VITE_SUPABASE_URL=your_supabase_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+    
+    <Warning>
+      **Security Note**: Never commit `.env` files to version control. The current codebase has hardcoded credentials in `src/App.jsx` (lines 34-36) which should be moved to environment variables for production use.
+    </Warning>
+    
+    Current configuration in `App.jsx`:
+    ```javascript
+    const SUPABASE_URL = "https://tmhxuevqpihrsfiaiiaw.supabase.co/";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+    ```
+  </Step>
+</Steps>
+
+## Development Server
+
+Start the Vite development server:
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173` (default Vite port).
+
+### Available Scripts
+
+The `package.json` defines the following scripts:
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| `dev` | `vite` | Starts the development server with hot reload |
+| `build` | `vite build` | Creates an optimized production build |
+| `preview` | `vite preview` | Previews the production build locally |
+| `lint` | `eslint .` | Runs ESLint to check code quality |
+
+## Building for Production
+
+<Steps>
+  <Step title="Create production build">
+    Generate an optimized production bundle:
+    
+    ```bash
+    npm run build
+    ```
+    
+    This creates a `dist/` directory with minified and optimized assets.
+  </Step>
+
+  <Step title="Preview the build">
+    Test the production build locally:
+    
+    ```bash
+    npm run preview
+    ```
+  </Step>
+
+  <Step title="Deploy">
+    Deploy the contents of the `dist/` directory to your hosting platform:
+    - **Vercel**: Connect your Git repository for automatic deployments
+    - **Netlify**: Drag and drop the `dist/` folder or use the Netlify CLI
+    - **AWS S3**: Upload the `dist/` contents to an S3 bucket with static hosting enabled
+    - **GitHub Pages**: Use a deployment action to publish the `dist/` folder
+  </Step>
+</Steps>
+
+## Vite Configuration
+
+The application uses a custom Vite configuration (`vite.config.ts`) with:
+
+```typescript
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/auth': {
+        target: 'https://tmhxuevqpihrsfiaiiaw.supabase.co',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^/auth/, '/auth'),
+      },
+    },
+  },
+});
+```
+
+### Key Configuration Features
+
+- **React Plugin**: Uses `@vitejs/plugin-react` for Fast Refresh and JSX support
+- **Proxy Configuration**: Proxies `/auth` requests to Supabase to avoid CORS issues during development
+- **Default Port**: Development server runs on port 5173
+
+<Warning>
+  The proxy configuration includes a hardcoded Supabase URL. For multi-environment deployments, consider using environment variables in the Vite config.
+</Warning>
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 5173 is already in use, Vite will automatically try the next available port. You can specify a custom port:
+
+```bash
+npm run dev -- --port 3000
+```
+
+### Supabase Connection Issues
+
+Verify that:
+1. Your Supabase URL and anon key are correct
+2. Supabase project is active and accessible
+3. Network/firewall settings allow connections to Supabase
+
+### Build Errors
+
+Clear the cache and reinstall dependencies:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+npm run build
+```
+
+## Next Steps
+
+- Configure [Backend Setup](/deployment/backend-setup) to enable API functionality
+- Set up [Database Configuration](/deployment/database-configuration) for data persistence
+- Review Supabase authentication settings for Google OAuth integration

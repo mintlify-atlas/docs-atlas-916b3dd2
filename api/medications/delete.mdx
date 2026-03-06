@@ -1,0 +1,54 @@
+---
+title: 'Delete Medication'
+api: 'DELETE /medication/{id}'
+description: 'Remove a medication from the inventory'
+---
+
+Delete a medication record from the system.
+
+## Endpoint
+
+```
+DELETE /medication/{id}
+```
+
+## Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the medication to delete
+</ParamField>
+
+## Response
+
+This endpoint returns an empty response body on success.
+
+## Example Request
+
+```bash
+curl -X DELETE http://localhost:8080/medication/3
+```
+
+## Example Response
+
+```
+200 OK
+```
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Medication deleted successfully |
+| `404` | Medication with specified ID not found |
+
+## Important Notes
+
+<Warning>
+  Deleting a medication is permanent and cannot be undone. Ensure that the medication is not associated with any active treatments before deletion.
+</Warning>
+
+## Related Endpoints
+
+- [List Medications](/api/medications/list)
+- [Create Medication](/api/medications/create)
+- [Update Medication](/api/medications/update)

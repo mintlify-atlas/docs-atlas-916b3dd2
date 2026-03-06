@@ -1,0 +1,297 @@
+---
+title: Treatment Tracking
+description: Create and manage treatment plans linking medications to children with schedules and dosing instructions
+---
+
+## Overview
+
+Treatment Tracking connects medications to specific children, defining when and how medications should be administered. Each treatment includes date ranges, custom dosing instructions, and links to medication records.
+
+## Treatment Data Model
+
+Treatments are the core entity that connects medications to children:
+
+```java
+@Entity
+public class Treatment {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    
+    @Column(name = "id_child")
+    private int childId;        // Links to Child entity
+    
+    @Column(name = "id_medication")
+    private int medicationId;   // Links to Medication entity
+    
+    @Column(name = "start_date")
+    private Date startDate;     // When treatment begins
+    
+    @Column(name = "end_date")
+    private Date endDate;       // When treatment ends (nullable)
+    
+    @Column(name = "specific_dose")
+    private int specificDose;   // Dosage for this treatment
+    
+    private String instructions; // Special instructions
+}
+```
+
+<Info>
+Treatments link `Child` and `Medication` entities, allowing the same medication to be prescribed to multiple children with different dosing schedules.
+</Info>
+
+## API Endpoints
+
+### Get All Treatments
+
+Retrieve all active treatments:
+
+```javascript
+const response = await fetch("/api/treatments");
+const treatments = await response.json();
+```
+
+**Backend Implementation:**
+
+```java
+@GetMapping
+public ResponseEntity<List<Treatment>> getAll() {
+    return ResponseEntity.ok(service.getAllTreatments());
+}
+```
+
+### Get Single Treatment
+
+Retrieve a specific treatment by ID:
+
+```java
+@GetMapping("/{id}")
+public ResponseEntity<Treatment> getTreatment(@PathVariable int id) {
+    Treatment treatment = service.getTreatment(id);
+    if (treatment == null) return ResponseEntity.notFound().build();
+    return ResponseEntity.ok(treatment);
+}
+```
+
+### Create Treatment
+
+Create a new treatment plan:
+
+```javascript
+const response = await fetch("/api/treatments", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    childId: 5,
+    medicationId: 12,
+    startDate: "2026-03-06T00:00:00Z",
+    endDate: "2026-04-06T00:00:00Z",
+    specificDose: 500,
+    instructions: "Take with food, twice daily after meals"
+  })
+});
+const newTreatment = await response.json();
+```
+
+**Backend Endpoint:**
+
+```java
+@PostMapping
+public ResponseEntity<Treatment> create(@RequestBody Treatment treatment) {
+    return ResponseEntity.ok(service.createTreatment(treatment));
+}
+```
+
+### Update Treatment
+
+Modify an existing treatment plan:
+
+```java
+@PutMapping("/{id}")
+public ResponseEntity<Treatment> update(
+    @PathVariable int id,
+    @RequestBody Treatment treatment
+) {
+    Treatment updated = service.updateTreatment(id, treatment);
+    if (updated == null) return ResponseEntity.notFound().build();
+    return ResponseEntity.ok(updated);
+}
+```
+
+<Note>
+Updating a treatment does not affect historical take records. Past medication administration records remain unchanged.
+</Note>
+
+### Delete Treatment
+
+Remove a treatment plan:
+
+```java
+@DeleteMapping("/{id}")
+public ResponseEntity<Void> delete(@PathVariable int id) {
+    boolean deleted = service.deleteTreatment(id);
+    if (!deleted) return ResponseEntity.notFound().build();
+    return ResponseEntity.ok().build();
+}
+```
+
+## Recording Medication Administration
+
+Treatments work in conjunction with "Take Records" to track actual medication administration:
+
+### TakeRecord Model
+
+```java
+@Entity
+public class TakeRecord {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    
+    @Column(name = "id_treatment")
+    private int treatmentId;      // Links to Treatment
+    
+    @Column(name = "id_registrator")
+    private int registratorId;    // Who recorded the take
+    
+    private Date date;            // When medication was taken
+    
+    @Column(name = "take_success")
+    private Boolean takeSuccess;  // Successfully administered?
+    
+    private String observations;  // Notes or side effects
+}
+```
+
+### Recording a Take
+
+Log when a medication is administered:
+
+```javascript
+const response = await fetch("/api/take", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    treatment_id: 15,
+    registeredBy_id: 3,  // Tutor/caregiver ID
+    takeSuccess: true,
+    observations: "No side effects observed"
+  })
+});
+```
+
+**Backend Implementation:**
+
+```java
+@PostMapping
+public ResponseEntity<TakeRecord> createTake(@RequestBody TakeRequest request) {
+    TakeRecord take = new TakeRecord(
+        0,
+        request.getTreatment_id(),
+        request.getRegisteredBy_id(),
+        new Date(),  // Current timestamp
+        request.getTakeSuccess(),
+        request.getObservations()
+    );
+    
+    TakeRecord saved = service.registerTake(take);
+    
+    return ResponseEntity
+        .created(URI.create("/take/" + saved.getId()))
+        .body(saved);
+}
+```
+
+### Get Treatment History
+
+Retrieve all take records for a treatment:
+
+```java
+@GetMapping("/{treatmentId}")
+public ResponseEntity<List<TakeRecord>> getTake(@PathVariable int treatmentId) {
+    return ResponseEntity.ok(service.getTake(treatmentId));
+}
+```
+
+## Treatment Workflow
+
+<Steps>
+  <Step title="Create Medication">
+    First, add the medication to the system with dosing information and inventory details.
+  </Step>
+  
+  <Step title="Link to Child">
+    Create a treatment that links the medication to a specific child with customized dosing and scheduling.
+  </Step>
+  
+  <Step title="Record Administration">
+    As medications are given, create take records to log successful administration and any observations.
+  </Step>
+  
+  <Step title="Monitor Compliance">
+    Review take records to ensure treatment plans are being followed correctly.
+  </Step>
+</Steps>
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Ongoing Medication" icon="pills">
+    Create treatments with no end date for chronic conditions requiring continuous medication
+  </Card>
+  
+  <Card title="Limited Duration" icon="clock">
+    Set start and end dates for antibiotics or other time-limited treatments
+  </Card>
+  
+  <Card title="Custom Dosing" icon="flask">
+    Override default medication doses with child-specific amounts
+  </Card>
+  
+  <Card title="Special Instructions" icon="clipboard-list">
+    Add preparation notes, dietary requirements, or timing instructions
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Treatment Planning">
+    - Always set a `startDate` for new treatments
+    - Use `endDate` for treatments with known duration
+    - For ongoing treatments, leave `endDate` null
+    - Update `specificDose` if different from medication default
+    - Include detailed `instructions` for complex administrations
+  </Accordion>
+  
+  <Accordion title="Recording Takes">
+    - Record takes immediately after administration
+    - Always include the `registratorId` for accountability
+    - Set `takeSuccess` to `false` if medication was refused or vomited
+    - Use `observations` field for side effects or unusual reactions
+    - Don't delete take records - they provide important history
+  </Accordion>
+  
+  <Accordion title="Monitoring Compliance">
+    - Review take records regularly for patterns
+    - Check for missed doses or frequent unsuccessful takes
+    - Look for consistent observations that might indicate issues
+    - Consider adjusting treatment plans based on take history
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+Deleting a treatment does not automatically delete associated take records. Consider the impact on historical data before removing treatments.
+</Warning>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Medication Management" icon="pills" href="/features/medication-management">
+    Manage the medication catalog that treatments reference
+  </Card>
+  <Card title="User Roles" icon="users" href="/features/user-roles">
+    Understand which users can create and manage treatments
+  </Card>
+</CardGroup>

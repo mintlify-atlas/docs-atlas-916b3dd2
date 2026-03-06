@@ -1,0 +1,54 @@
+---
+title: 'Delete Treatment'
+api: 'DELETE /treatments/{id}'
+description: 'Remove a treatment record'
+---
+
+Delete a treatment record from the system.
+
+## Endpoint
+
+```
+DELETE /treatments/{id}
+```
+
+## Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the treatment to delete
+</ParamField>
+
+## Response
+
+This endpoint returns an empty response body on success.
+
+## Example Request
+
+```bash
+curl -X DELETE http://localhost:8080/treatments/3
+```
+
+## Example Response
+
+```
+200 OK
+```
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Treatment deleted successfully |
+| `404` | Treatment with specified ID not found |
+
+## Important Notes
+
+<Warning>
+  Deleting a treatment is permanent and cannot be undone. Consider the impact on associated take records before deletion.
+</Warning>
+
+## Related Endpoints
+
+- [List Treatments](/api/treatments/list)
+- [Create Treatment](/api/treatments/create)
+- [Update Treatment](/api/treatments/update)

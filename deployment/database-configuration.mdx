@@ -1,0 +1,378 @@
+---
+title: 'Database Configuration'
+description: 'MySQL database setup and configuration for NexeCare'
+---
+
+## Overview
+
+NexeCare uses **MySQL 8.0+** as its primary database with **Hibernate/JPA** for object-relational mapping. The database stores healthcare data including children profiles, medications, treatments, and medication intake records.
+
+## Prerequisites
+
+- **MySQL Server**: Version 8.0 or higher
+- **MySQL Client**: Command-line client or GUI tool (MySQL Workbench, DBeaver, etc.)
+- Access credentials with database creation privileges
+
+## Database Setup
+
+<Steps>
+  <Step title="Install MySQL">
+    If MySQL is not already installed:
+    
+    <CodeGroup>
+    ```bash Ubuntu/Debian
+    sudo apt update
+    sudo apt install mysql-server
+    sudo systemctl start mysql
+    sudo mysql_secure_installation
+    ```
+    
+    ```bash macOS
+    brew install mysql
+    brew services start mysql
+    mysql_secure_installation
+    ```
+    
+    ```bash Windows
+    # Download and install MySQL from:
+    # https://dev.mysql.com/downloads/installer/
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Create the database">
+    Log into MySQL and create the `nexe_care` database:
+    
+    ```sql
+    mysql -u root -p
+    ```
+    
+    Then execute:
+    
+    ```sql
+    CREATE DATABASE nexe_care CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ```
+    
+    Verify the database was created:
+    
+    ```sql
+    SHOW DATABASES;
+    USE nexe_care;
+    ```
+  </Step>
+
+  <Step title="Create a dedicated database user (recommended)">
+    For production, create a dedicated user instead of using `root`:
+    
+    ```sql
+    CREATE USER 'nexecare_user'@'localhost' IDENTIFIED BY 'secure_password_here';
+    GRANT ALL PRIVILEGES ON nexe_care.* TO 'nexecare_user'@'localhost';
+    FLUSH PRIVILEGES;
+    ```
+    
+    <Warning>
+      Replace `'secure_password_here'` with a strong password. Never use default or weak passwords in production environments.
+    </Warning>
+  </Step>
+
+  <Step title="Update application.properties">
+    Update the Spring Boot configuration with your database credentials:
+    
+    ```properties
+    spring.datasource.url=jdbc:mysql://localhost:3306/nexe_care?useSSL=false&serverTimezone=UTC
+    spring.datasource.username=nexecare_user
+    spring.datasource.password=secure_password_here
+    ```
+  </Step>
+</Steps>
+
+## Connection Configuration
+
+The JDBC connection string uses the following parameters:
+
+```
+jdbc:mysql://localhost:3306/nexe_care?useSSL=false&serverTimezone=UTC
+```
+
+### Connection Parameters
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Protocol | `jdbc:mysql://` | JDBC MySQL driver protocol |
+| Host | `localhost` | Database server address |
+| Port | `3306` | MySQL default port |
+| Database | `nexe_care` | Target database name |
+| `useSSL` | `false` | Disables SSL (enable for production) |
+| `serverTimezone` | `UTC` | Sets timezone to UTC for consistency |
+
+<Warning>
+  **Production Security**: 
+  - Enable SSL for encrypted connections: `useSSL=true`
+  - Use a dedicated database user with limited privileges
+  - Never commit credentials to version control
+  - Store credentials in environment variables or secret management systems
+</Warning>
+
+## Current Configuration (Source Code)
+
+The application currently uses this configuration in `application.properties`:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/nexe_care?useSSL=false&serverTimezone=UTC
+spring.datasource.username=root
+spring.datasource.password=uSjIdzYsHTBQ9F2zs0Jc
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+```
+
+<Warning>
+  **CRITICAL SECURITY ISSUE**: The source code contains hardcoded database credentials including:
+  - Username: `root` (use a dedicated user instead)
+  - Password: `uSjIdzYsHTBQ9F2zs0Jc` (exposed in version control)
+  
+  **Required Actions**:
+  1. Change the database password immediately
+  2. Create a dedicated database user with limited privileges
+  3. Remove hardcoded credentials from the codebase
+  4. Use environment variables or Spring profiles for configuration
+  5. Add `application.properties` to `.gitignore` or use `application-local.properties`
+</Warning>
+
+## JPA/Hibernate Configuration
+
+The application uses these Hibernate settings:
+
+```properties
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+```
+
+### DDL Auto Options
+
+| Option | Behavior | Use Case |
+|--------|----------|----------|
+| `update` | Updates schema without deleting existing data | **Current setting** - Development |
+| `create` | Drops and recreates schema on startup | Testing only |
+| `create-drop` | Creates schema, drops on shutdown | Testing only |
+| `validate` | Validates schema, no changes | **Recommended for production** |
+| `none` | No automatic schema management | Manual migrations |
+
+<Warning>
+  The current setting `spring.jpa.hibernate.ddl-auto=update` is convenient for development but risky for production. Consider:
+  - Using `validate` in production to prevent automatic schema changes
+  - Implementing database migrations with Flyway or Liquibase
+  - Maintaining SQL migration scripts for schema changes
+</Warning>
+
+## Entity Models
+
+Hibernate automatically generates tables based on these JPA entity models:
+
+### Core Entities
+
+**Child** (`com.NexeCare.backend.model.Child`)
+```java
+@Entity
+public class Child {
+    @Id @GeneratedValue
+    private int id;
+    private String name;
+    private String surname;
+    private String address;
+    private String img_profile;
+}
+```
+- Stores child/patient profile information
+- Primary key: `id` (auto-increment)
+
+**Medication** (`com.NexeCare.backend.model.Medication`)
+```java
+@Entity
+public class Medication {
+    @Id @GeneratedValue
+    private int id;
+    @Column(name = "name_medication")
+    private String nameMedication;
+    @Column(name = "dose_unit")
+    private String doseUnit;
+    private String type;
+    private String frequency;
+    @Column(name = "min_stock")
+    private int minStock;
+    private int stock;
+    @Column(name = "created_at")
+    private Date createdAt;
+    @Column(name = "updated_at")
+    private Date updatedAt;
+}
+```
+- Stores medication catalog and inventory
+- Tracks stock levels and dosing information
+
+**Treatment** (`com.NexeCare.backend.model.Treatment`)
+- Links medications to children
+- Defines treatment schedules
+
+**TakeRecord** (`com.NexeCare.backend.model.TakeRecord`)
+- Records medication intake events
+- Tracks compliance and timing
+
+**Tutor** (`com.NexeCare.backend.model.Tutor`)
+- Stores guardian/caregiver information
+
+**Professional** (`com.NexeCare.backend.model.Professional`)
+- Stores healthcare provider information
+
+**Tutor_Relation** (`com.NexeCare.backend.model.Tutor_Relation`)
+- Many-to-many relationship between tutors and children
+
+### Automatic Table Generation
+
+On first startup with `ddl-auto=update`, Hibernate will:
+1. Scan all `@Entity` annotated classes
+2. Create corresponding tables in the `nexe_care` database
+3. Generate columns based on field types and annotations
+4. Create indexes for primary keys and relationships
+
+## Verifying the Setup
+
+<Steps>
+  <Step title="Check database connection">
+    Log into MySQL and verify the database exists:
+    
+    ```sql
+    mysql -u root -p
+    USE nexe_care;
+    SHOW TABLES;
+    ```
+  </Step>
+
+  <Step title="Start the backend application">
+    Run the Spring Boot application:
+    
+    ```bash
+    cd backend/backend
+    mvn spring-boot:run
+    ```
+    
+    Check the console output for:
+    ```
+    Hibernate: create table child ...
+    Hibernate: create table medication ...
+    ```
+  </Step>
+
+  <Step title="Verify tables were created">
+    Return to MySQL and list the tables:
+    
+    ```sql
+    SHOW TABLES;
+    ```
+    
+    You should see tables for all entity models:
+    - `child`
+    - `medication`
+    - `treatment`
+    - `take_record`
+    - `tutor`
+    - `professional`
+    - `tutor_relation`
+  </Step>
+
+  <Step title="Test API endpoints">
+    Use curl or Postman to test the REST endpoints:
+    
+    ```bash
+    # Get all medications
+    curl http://localhost:8080/api/medications
+    
+    # Get all treatments
+    curl http://localhost:8080/api/treatments
+    ```
+  </Step>
+</Steps>
+
+## Production Best Practices
+
+### 1. Externalize Configuration
+
+Use environment variables instead of hardcoded values:
+
+```bash
+export DB_URL="jdbc:mysql://production-host:3306/nexe_care?useSSL=true"
+export DB_USERNAME="nexecare_user"
+export DB_PASSWORD="strong_secure_password"
+```
+
+Reference in `application.properties`:
+
+```properties
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
+```
+
+### 2. Enable SSL Connections
+
+```properties
+spring.datasource.url=jdbc:mysql://host:3306/nexe_care?useSSL=true&requireSSL=true
+```
+
+### 3. Connection Pooling
+
+Configure HikariCP (Spring Boot's default):
+
+```properties
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=30000
+```
+
+### 4. Database Backups
+
+Schedule regular backups:
+
+```bash
+mysqldump -u nexecare_user -p nexe_care > backup_$(date +%Y%m%d).sql
+```
+
+### 5. Monitoring
+
+Enable JPA statistics and slow query logging:
+
+```properties
+spring.jpa.properties.hibernate.generate_statistics=true
+logging.level.org.hibernate.stat=DEBUG
+```
+
+## Troubleshooting
+
+### Connection Refused
+
+If you see `Connection refused` errors:
+
+1. Verify MySQL is running: `systemctl status mysql`
+2. Check MySQL is listening on port 3306: `netstat -tlnp | grep 3306`
+3. Verify firewall settings allow connections
+
+### Access Denied
+
+If you see `Access denied for user` errors:
+
+1. Verify credentials are correct
+2. Check user has necessary privileges: `SHOW GRANTS FOR 'nexecare_user'@'localhost';`
+3. Ensure the user can connect from the application host
+
+### Schema Validation Failed
+
+If Hibernate reports schema validation errors:
+
+1. Drop and recreate the database
+2. Let Hibernate regenerate the schema
+3. Or manually fix schema inconsistencies
+
+## Next Steps
+
+- Complete [Backend Setup](/deployment/backend-setup) to start the Spring Boot application
+- Configure [Frontend Setup](/deployment/frontend-setup) to connect to the API
+- Review entity relationships and add custom indexes if needed
+- Implement database migration strategy for production

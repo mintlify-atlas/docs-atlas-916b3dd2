@@ -1,0 +1,278 @@
+---
+title: Medication Management
+description: Track and manage medications with status monitoring and inventory control
+---
+
+## Overview
+
+The Medication Management feature allows caregivers to track medications, monitor inventory levels, and record dosing information. The system provides real-time status updates and maintains a complete history of medication records.
+
+## Medication Data Model
+
+Each medication in NexeCare contains the following properties:
+
+```java
+@Entity
+public class Medication {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    
+    @Column(name = "name_medication")
+    private String nameMedication;
+    
+    @Column(name = "dose_unit")
+    private String doseUnit;  // e.g., "mg", "ml"
+    
+    private String type;      // e.g., "tablet", "liquid"
+    
+    private String frequency; // e.g., "daily", "twice daily"
+    
+    @Column(name = "min_stock")
+    private int minStock;     // Minimum inventory threshold
+    
+    private int stock;        // Current inventory count
+    
+    @Column(name = "created_at")
+    private Date createdAt;
+    
+    @Column(name = "updated_at")
+    private Date updatedAt;
+}
+```
+
+<Note>
+The `minStock` field enables automatic low-inventory alerts, helping caregivers stay ahead of medication refills.
+</Note>
+
+## API Endpoints
+
+### Get All Medications
+
+Retrieve the complete list of medications:
+
+```javascript
+const response = await fetch("/api/medications");
+const medications = await response.json();
+```
+
+**Backend Implementation:**
+
+```java
+@GetMapping
+public ResponseEntity<List<Medication>> getAllMeds() {
+    List<Medication> meds = service.getAllMeds();
+    if (meds.isEmpty()) return ResponseEntity.noContent().build();
+    return ResponseEntity.ok(meds);
+}
+```
+
+### Get Single Medication
+
+Retrieve a specific medication by ID:
+
+```java
+@GetMapping("/{id}")
+public ResponseEntity<Medication> getMed(@PathVariable int id) {
+    Medication med = service.getMed(id);
+    if (med == null) return ResponseEntity.noContent().build();
+    return ResponseEntity.ok(med);
+}
+```
+
+### Create Medication
+
+Add a new medication to the system:
+
+```javascript
+const response = await fetch("/api/medications", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ 
+    nameMedication: "Aspirin",
+    doseUnit: "mg",
+    type: "tablet",
+    frequency: "daily",
+    stock: 30,
+    minStock: 10
+  })
+});
+const newMedication = await response.json();
+```
+
+**Backend Endpoint:**
+
+```java
+@PostMapping
+public ResponseEntity<Medication> createMed(@RequestBody Medication medication) {
+    Medication created = service.createMed(medication);
+    return ResponseEntity.ok(created);
+}
+```
+
+### Update Medication
+
+Modify an existing medication:
+
+```java
+@PutMapping("/{id}")
+public ResponseEntity<Medication> updateMed(
+    @PathVariable int id, 
+    @RequestBody Medication medication
+) {
+    Medication updated = service.updateMed(id, medication);
+    if (updated == null) return ResponseEntity.notFound().build();
+    return ResponseEntity.ok(updated);
+}
+```
+
+### Delete Medication
+
+Remove a medication from the system:
+
+```javascript
+const response = await fetch(`/api/medications/${id}`, {
+  method: "DELETE"
+});
+```
+
+**Backend Implementation:**
+
+```java
+@DeleteMapping("/{id}")
+public ResponseEntity<Void> deleteMed(@PathVariable int id) {
+    boolean deleted = service.deleteMed(id);
+    if (!deleted) return ResponseEntity.notFound().build();
+    return ResponseEntity.ok().build();
+}
+```
+
+## Frontend UI Implementation
+
+The medication list component provides an intuitive interface for managing medications:
+
+### Key Features
+
+<CardGroup cols={2}>
+  <Card title="Real-time Status" icon="circle-check">
+    Toggle medication status between "taken" and "pending" with instant visual feedback
+  </Card>
+  <Card title="Optimistic Updates" icon="bolt">
+    UI updates immediately before server confirmation for responsive user experience
+  </Card>
+  <Card title="Error Recovery" icon="rotate-left">
+    Automatic rollback if server requests fail
+  </Card>
+  <Card title="Add & Delete" icon="pen-to-square">
+    Quick medication entry and removal with confirmation
+  </Card>
+</CardGroup>
+
+### Status Toggle Implementation
+
+The status toggle uses optimistic UI updates:
+
+```javascript
+const toggleTaken = async (id) => {
+  // Optimistically update UI
+  setMeds((prev) =>
+    prev.map((m) =>
+      m.id === id
+        ? { ...m, status: m.status === "tomado" ? "pendiente" : "tomado" }
+        : m
+    )
+  );
+
+  try {
+    await fetch(`/api/medications/${id}/toggle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    // Rollback on error
+    setMeds((prev) =>
+      prev.map((m) =>
+        m.id === id
+          ? { ...m, status: m.status === "tomado" ? "pendiente" : "tomado" }
+          : m
+      )
+    );
+  }
+};
+```
+
+### Adding Medications
+
+The add medication flow with temporary ID handling:
+
+```javascript
+const addMedication = async (e) => {
+  e.preventDefault();
+  const name = newName.trim();
+  if (!name) return;
+  
+  setAdding(true);
+  
+  // Create temporary ID for optimistic UI
+  const tempId = -Date.now();
+  const newMed = { id: tempId, name, status: "pendiente" };
+  setMeds((prev) => [newMed, ...prev]);
+  setNewName("");
+
+  try {
+    const res = await fetch("/api/medications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    
+    const created = await res.json();
+    // Replace temporary ID with real server ID
+    setMeds((prev) => prev.map((m) => (m.id === tempId ? created : m)));
+  } catch (e) {
+    console.warn("Failed to create:", e);
+  } finally {
+    setAdding(false);
+  }
+};
+```
+
+<Warning>
+Always validate medication names and dosages before submission. Empty or duplicate entries should be prevented at the UI level.
+</Warning>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Stock Management">
+    - Set appropriate `minStock` thresholds for each medication
+    - Monitor inventory levels regularly
+    - Update stock counts when refills arrive
+    - Consider automatic alerts when stock falls below minimum
+  </Accordion>
+  
+  <Accordion title="Data Validation">
+    - Verify dose units are standardized (mg, ml, tablets)
+    - Ensure frequency descriptions are consistent
+    - Validate medication names for duplicates
+    - Check that stock values are non-negative
+  </Accordion>
+  
+  <Accordion title="Error Handling">
+    - Implement optimistic UI updates for better UX
+    - Provide rollback mechanisms for failed requests
+    - Display clear error messages to users
+    - Log errors for debugging and monitoring
+  </Accordion>
+</AccordionGroup>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Treatment Tracking" icon="clipboard-list" href="/features/treatment-tracking">
+    Link medications to treatment plans with scheduling
+  </Card>
+  <Card title="Calendar Integration" icon="calendar" href="/features/calendar-integration">
+    Schedule medication reminders in Google Calendar
+  </Card>
+</CardGroup>

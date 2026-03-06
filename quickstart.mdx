@@ -1,80 +1,401 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart Guide
+description: Get started with NexeCare in minutes - from account setup to tracking your first medication
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will walk you through setting up NexeCare and tracking your first medication intake in just a few minutes.
 
-### Step 1: Set up your local environment
+## Prerequisites
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+Before you begin, make sure you have:
 
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+- A modern web browser (Chrome, Firefox, Safari, or Edge)
+- A Google account (for authentication and calendar sync)
+- Internet connection
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  NexeCare uses Google OAuth for secure authentication. You'll need to grant calendar access if you want to sync medication schedules with Google Calendar.
 </Note>
+
+## Setup Steps
+
+<Steps>
+  <Step title="Sign In with Google">
+    Navigate to NexeCare and click the "Iniciar Sesión" button in the navigation bar.
+
+    ```jsx
+    // Authentication is handled via Supabase with Google OAuth
+    const handleGoogleSignIn = async () => {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: { 
+          redirectTo: window.location.origin,
+          scopes: "https://www.googleapis.com/auth/calendar"
+        }
+      });
+      if (error) console.log("Error al iniciar sesión:", error.message);
+    };
+    ```
+
+    When you click sign in, you'll be redirected to Google to authorize NexeCare. After authorization, you'll be redirected back to the application.
+
+    <Warning>
+      Make sure to grant calendar access if you want to use the scheduling features. You can always revoke this access later in your Google account settings.
+    </Warning>
+  </Step>
+
+  <Step title="Add Your First Child Profile">
+    Once authenticated, you'll need to create a child profile to start managing care.
+
+    Child profiles include:
+    - **Name and Surname**: Full name of the child
+    - **Address**: Home address for records
+    - **Profile Image**: Optional photo for easy identification
+
+    ```java
+    // Backend: Child profile model
+    @Entity
+    public class Child {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private int id;
+        private String name;
+        private String surname;
+        private String address;
+        private String img_profile;
+    }
+    ```
+
+    The child profile serves as the foundation for all medication and treatment management.
+  </Step>
+
+  <Step title="Add a Medication to Your List">
+    Navigate to the medication panel on the right side of the calendar view. Here you can add medications to your tracking list.
+
+    To add a medication:
+
+    1. Type the medication name in the input field
+    2. Click "Añadir" to add it to your list
+    3. The medication will appear with a "No tomado" (Not taken) status
+
+    ```jsx
+    // Frontend: Adding a medication
+    const addMedication = async (e) => {
+      e.preventDefault();
+      const name = newName.trim();
+      if (!name) return;
+      
+      setAdding(true);
+      const tempId = -Date.now();
+      const newMed = { id: tempId, name, status: "pendiente" };
+      setMeds((prev) => [newMed, ...prev]);
+      
+      try {
+        const res = await fetch("/api/medications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name })
+        });
+        
+        if (!res.ok) throw new Error("Failed to create");
+        const created = await res.json();
+        setMeds((prev) => prev.map((m) => (m.id === tempId ? created : m)));
+      } finally {
+        setAdding(false);
+      }
+    };
+    ```
+
+    ```java
+    // Backend: Creating a medication record
+    @PostMapping
+    public ResponseEntity<Medication> createMed(@RequestBody Medication medication) {
+        Medication created = service.createMed(medication);
+        return ResponseEntity.ok(created);
+    }
+    ```
+
+    <Note>
+      Medications support detailed information including dosage units, type, frequency, and stock tracking. You can add these details later through the full medication management interface.
+    </Note>
+  </Step>
+
+  <Step title="Track Medication Intake">
+    Once you have medications in your list, tracking intake is simple:
+
+    1. Find the medication in your list
+    2. Click the status button to toggle between "No tomado" (Not taken) and "Tomado" (Taken)
+    3. The system records the timestamp automatically
+
+    ```jsx
+    // Frontend: Toggle medication status
+    const toggleTaken = async (id) => {
+      setMeds((prev) =>
+        prev.map((m) =>
+          m.id === id
+            ? { ...m, status: m.status === "tomado" ? "pendiente" : "tomado" }
+            : m
+        )
+      );
+
+      try {
+        await fetch(`/api/medications/${id}/toggle`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch (e) {
+        console.warn("No se pudo notificar al servidor:", e);
+        // Rollback on error
+        setMeds((prev) =>
+          prev.map((m) =>
+            m.id === id
+              ? { ...m, status: m.status === "tomado" ? "pendiente" : "tomado" }
+              : m
+          )
+        );
+      }
+    };
+    ```
+
+    For detailed tracking with observations, use the take recording endpoint:
+
+    ```java
+    // Backend: Record detailed medication intake
+    @PostMapping
+    public ResponseEntity<TakeRecord> createTake(@RequestBody TakeRequest request) {
+        TakeRecord take = new TakeRecord(
+            0,
+            request.getTreatment_id(),
+            request.getRegisteredBy_id(),
+            new Date(),
+            request.getTakeSuccess(),
+            request.getObservations()
+        );
+        
+        TakeRecord saved = service.registerTake(take);
+        
+        return ResponseEntity
+            .created(URI.create("/take/" + saved.getId()))
+            .body(saved);
+    }
+    ```
+
+    <Note>
+      Each intake record includes the timestamp, who recorded it, whether the dose was successfully taken, and optional observations for special notes.
+    </Note>
+  </Step>
+
+  <Step title="Set Up Google Calendar Integration (Optional)">
+    If you granted calendar access during sign-in, you can create medication reminders and appointments directly in Google Calendar.
+
+    To create a calendar event:
+
+    1. Use the calendar interface to select a date and time
+    2. Enter the event name (e.g., "Give Aspirin")
+    3. Add a description with dosage information
+    4. Click create to add it to your Google Calendar
+
+    ```javascript
+    // Creating a Google Calendar event
+    export async function createCalendarEvent(
+      session,
+      eventName,
+      eventDescription,
+      start,
+      end,
+      setEvents
+    ) {
+      const event = {
+        summary: eventName,
+        description: eventDescription,
+        start: {
+          dateTime: start.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+          dateTime: end.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+      };
+
+      try {
+        const res = await fetch(
+          "/auth/v1/calendar/v3/calendars/primary/events",
+          {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + session.provider_token,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(event)
+          }
+        );
+
+        const data = await res.json();
+        alert("Evento creado, revisa tu Google Calendar!!");
+        
+        // Refresh calendar view
+        getCalendarEvents(session, setEvents);
+      } catch (error) {
+        console.error("Error al crear evento:", error);
+      }
+    }
+    ```
+
+    Your medication schedules will now appear in Google Calendar alongside your other appointments, and you'll receive notifications based on your Calendar settings.
+
+    <Warning>
+      Calendar events require an active session with a valid provider token. Make sure you're signed in with Google to use this feature.
+    </Warning>
+  </Step>
+</Steps>
+
+## Understanding the Interface
+
+### Calendar View
+
+The main view features a FullCalendar interface with:
+
+- **Month view**: See all medication events at a glance
+- **Week/Day views**: Focus on specific timeframes
+- **Interactive events**: Click events to view details
+- **Drag and drop**: Reschedule events by dragging (if enabled)
+
+```jsx
+// FullCalendar configuration
+<FullCalendar
+  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+  initialView="dayGridMonth"
+  events={events}
+  editable={true}
+  selectable={true}
+  height="auto"
+/>
+```
+
+### Medication Panel
+
+The right sidebar contains:
+
+- **Medication List**: All tracked medications with status indicators
+- **Quick Actions**: Toggle taken/pending status or delete medications
+- **Add New**: Input field to quickly add new medications
+
+### Navigation
+
+The top navigation bar provides access to:
+
+- **Home**: Landing page with platform information
+- **Agenda**: Main calendar and medication tracking interface
+- **Chat**: Communication features (if enabled)
+- **Profile**: View your session info and sign out
+
+## API Endpoints Reference
+
+For developers integrating with NexeCare:
+
+<CodeGroup>
+
+```bash GET /medication
+GET /medication
+Returns all medications
+```
+
+```bash GET /medication/:id
+GET /medication/1
+Returns a specific medication by ID
+```
+
+```bash POST /medication
+POST /medication
+Content-Type: application/json
+
+{
+  "nameMedication": "Aspirin",
+  "doseUnit": "mg",
+  "type": "tablet",
+  "frequency": "twice daily",
+  "minStock": 10,
+  "stock": 30
+}
+```
+
+```bash POST /take
+POST /take
+Content-Type: application/json
+
+{
+  "treatment_id": 1,
+  "registeredBy_id": 123,
+  "takeSuccess": true,
+  "observations": "Taken with food as instructed"
+}
+```
+
+</CodeGroup>
+
+## Next Steps
+
+Now that you've completed the quickstart, explore these features:
+
+<CardGroup cols={2}>
+  <Card title="Treatment Plans" icon="clipboard-medical">
+    Create comprehensive treatment plans that link medications to specific children with detailed schedules and instructions.
+  </Card>
+  
+  <Card title="Stock Management" icon="boxes-stacked">
+    Set minimum stock levels and receive alerts when medications are running low to ensure you never miss a dose.
+  </Card>
+  
+  <Card title="Intake History" icon="clock-rotate-left">
+    Review complete medication history with timestamps, observations, and success indicators for comprehensive tracking.
+  </Card>
+  
+  <Card title="Multi-Caregiver Coordination" icon="users">
+    Share access with multiple caregivers to ensure everyone stays synchronized on medication schedules and intake.
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Authentication Issues
+
+If you can't sign in:
+- Ensure you're using a valid Google account
+- Check that pop-ups are not blocked in your browser
+- Try clearing browser cache and cookies
+- Verify your internet connection
+
+### Calendar Not Syncing
+
+If calendar events aren't appearing:
+- Confirm you granted calendar access during sign-in
+- Check that your session is active (you're signed in)
+- Refresh the page to reload events
+- Verify the Google Calendar API is accessible
+
+### Medication Status Not Updating
+
+If status toggles aren't working:
+- Check your internet connection
+- Verify the backend API is running
+- Look for error messages in the browser console
+- Try refreshing the page
+
+<Note>
+  For additional support or to report issues, contact your system administrator or refer to the technical documentation.
+</Note>
+
+## Support
+
+Need help? Here are your resources:
+
+- **Documentation**: Browse the full docs for detailed guides
+- **Technical Support**: Contact your administrator for technical issues
+- **Medical Questions**: Always consult healthcare providers for medical advice
+
+<Warning>
+  NexeCare is a care management tool and does not provide medical advice. Always consult qualified healthcare professionals for medical decisions.
+</Warning>

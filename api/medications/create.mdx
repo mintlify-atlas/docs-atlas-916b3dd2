@@ -1,0 +1,128 @@
+---
+title: 'Create Medication'
+api: 'POST /medication'
+description: 'Add a new medication to the inventory'
+---
+
+Create a new medication record in the system.
+
+## Endpoint
+
+```
+POST /medication
+```
+
+## Request Body
+
+<ParamField body="nameMedication" type="string" required>
+  Name of the medication
+</ParamField>
+
+<ParamField body="doseUnit" type="string" required>
+  Unit of measurement for the dose (e.g., "mg", "ml", "tablets")
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Type or category of medication (e.g., "Analgesic", "Antibiotic")
+</ParamField>
+
+<ParamField body="frequency" type="string" required>
+  Recommended frequency of administration (e.g., "Every 6 hours", "Daily")
+</ParamField>
+
+<ParamField body="minStock" type="integer" required>
+  Minimum stock level threshold for alerts
+</ParamField>
+
+<ParamField body="stock" type="integer" required>
+  Current stock quantity
+</ParamField>
+
+<ParamField body="createdAt" type="date" optional>
+  Timestamp when the medication is created (auto-generated if not provided)
+</ParamField>
+
+<ParamField body="updatedAt" type="date" optional>
+  Timestamp when the medication was last updated (auto-generated if not provided)
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="integer">
+  Unique identifier for the newly created medication
+</ResponseField>
+
+<ResponseField name="nameMedication" type="string">
+  Name of the medication
+</ResponseField>
+
+<ResponseField name="doseUnit" type="string">
+  Unit of measurement for the dose
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  Type or category of medication
+</ResponseField>
+
+<ResponseField name="frequency" type="string">
+  Recommended frequency of administration
+</ResponseField>
+
+<ResponseField name="minStock" type="integer">
+  Minimum stock level threshold
+</ResponseField>
+
+<ResponseField name="stock" type="integer">
+  Current stock quantity
+</ResponseField>
+
+<ResponseField name="createdAt" type="date">
+  Timestamp when the medication was created
+</ResponseField>
+
+<ResponseField name="updatedAt" type="date">
+  Timestamp when the medication was last updated
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST http://localhost:8080/medication \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nameMedication": "Ibuprofen",
+    "doseUnit": "mg",
+    "type": "Anti-inflammatory",
+    "frequency": "Every 8 hours",
+    "minStock": 25,
+    "stock": 200
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "id": 3,
+  "nameMedication": "Ibuprofen",
+  "doseUnit": "mg",
+  "type": "Anti-inflammatory",
+  "frequency": "Every 8 hours",
+  "minStock": 25,
+  "stock": 200,
+  "createdAt": "2026-03-06T10:30:00.000+00:00",
+  "updatedAt": "2026-03-06T10:30:00.000+00:00"
+}
+```
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Medication created successfully |
+
+## Related Endpoints
+
+- [List Medications](/api/medications/list)
+- [Update Medication](/api/medications/update)
+- [Delete Medication](/api/medications/delete)

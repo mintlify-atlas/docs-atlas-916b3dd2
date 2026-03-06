@@ -1,0 +1,57 @@
+---
+title: 'Delete Take Record'
+api: 'DELETE /take/{id}'
+description: 'Remove a take record'
+---
+
+Delete a medication administration record from the system.
+
+## Endpoint
+
+```
+DELETE /take/{id}
+```
+
+## Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the take record to delete
+</ParamField>
+
+## Response
+
+This endpoint returns an empty response body on success.
+
+## Example Request
+
+```bash
+curl -X DELETE http://localhost:8080/take/4
+```
+
+## Example Response
+
+```
+200 OK
+```
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Take record deleted successfully |
+| `404` | Take record with specified ID not found |
+
+## Important Notes
+
+<Warning>
+  Deleting a take record is permanent and cannot be undone. This action removes the historical record of medication administration.
+</Warning>
+
+<Info>
+  The NexeCare API does not currently support updating existing take records via PUT. To correct a take record, delete it and create a new one with the correct information.
+</Info>
+
+## Related Endpoints
+
+- [List Take Records](/api/take-records/list)
+- [Create Take Record](/api/take-records/create)

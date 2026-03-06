@@ -1,0 +1,177 @@
+---
+title: Introduction to NexeCare
+description: A healthcare management platform for tracking medication and care schedules for children with multiple disabilities
+---
+
+# Welcome to NexeCare
+
+NexeCare is a comprehensive healthcare management SaaS platform designed specifically for parents, caregivers, and medical professionals caring for children with multiple disabilities. Born from the collaboration between VelTech and Fundación Nexe, NexeCare combines technology and social commitment to provide personalized, high-quality care management.
+
+<Note>
+  NexeCare simplifies daily life for those who need it most by providing intuitive tools to manage medication schedules, track intake, and coordinate care across multiple caregivers.
+</Note>
+
+## Who is NexeCare For?
+
+NexeCare is designed for:
+
+- **Parents and Guardians**: Manage your child's medication schedules with confidence and reduce errors
+- **Caregivers**: Stay synchronized with the care team and track medication intake in real-time
+- **Medical Professionals**: Monitor treatment adherence and collaborate with families effectively
+- **Care Coordinators**: Oversee multiple children and ensure comprehensive care management
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Medication Management" icon="pills">
+    Track medications with detailed information including dosage, frequency, and stock levels. Set minimum stock alerts to ensure you never run out.
+  </Card>
+  
+  <Card title="Intake Tracking" icon="check-circle">
+    Record when medications are taken with timestamp tracking. Mark doses as taken/pending and add observations for each intake.
+  </Card>
+  
+  <Card title="Google Calendar Sync" icon="calendar">
+    Integrate with Google Calendar to schedule medication reminders and appointments. View all care activities in one unified calendar.
+  </Card>
+  
+  <Card title="Child Profiles" icon="user">
+    Create comprehensive profiles for each child including personal information, assigned medications, and treatment plans.
+  </Card>
+  
+  <Card title="Treatment Plans" icon="clipboard-list">
+    Define treatment schedules with start/end dates, specific dosages, and detailed instructions for each medication.
+  </Card>
+  
+  <Card title="Secure Authentication" icon="shield-check">
+    Sign in securely with Google OAuth via Supabase, ensuring your family's health data is protected.
+  </Card>
+</CardGroup>
+
+## Architecture Overview
+
+NexeCare is built with modern web technologies to provide a fast, reliable, and scalable platform:
+
+### Frontend Stack
+
+- **React 19** with **Vite** for fast development and optimal performance
+- **Tailwind CSS** for responsive, mobile-first design
+- **FullCalendar** for interactive calendar views
+- **Supabase Auth Helpers** for seamless authentication
+- **React Router** for smooth navigation
+
+### Backend Stack
+
+- **Spring Boot** (Java) for robust REST API services
+- **JPA/Hibernate** for database operations
+- **RESTful architecture** with dedicated controllers for medications, treatments, and intake tracking
+
+### Authentication & Integration
+
+- **Supabase** for secure authentication and user management
+- **Google OAuth 2.0** for single sign-on
+- **Google Calendar API** for event synchronization with calendar scopes
+
+### Database Models
+
+The platform uses a relational database with key entities:
+
+```java
+// Child Profile
+public class Child {
+    private int id;
+    private String name;
+    private String surname;
+    private String address;
+    private String img_profile;
+}
+
+// Medication Details
+public class Medication {
+    private int id;
+    private String nameMedication;
+    private String doseUnit;
+    private String type;
+    private String frequency;
+    private int minStock;
+    private int stock;
+    private Date createdAt;
+    private Date updatedAt;
+}
+
+// Treatment Plan
+public class Treatment {
+    private int id;
+    private int childId;
+    private int medicationId;
+    private Date startDate;
+    private Date endDate;
+    private int specificDose;
+    private String instructions;
+}
+```
+
+## How It Works
+
+<Steps>
+  <Step title="Authentication">
+    Users sign in securely using their Google account through Supabase authentication.
+  </Step>
+  
+  <Step title="Profile Setup">
+    Create child profiles with essential information and medical details.
+  </Step>
+  
+  <Step title="Medication Management">
+    Add medications to your list with dosage information, frequency, and stock tracking.
+  </Step>
+  
+  <Step title="Treatment Assignment">
+    Assign medications to specific children with detailed treatment plans and schedules.
+  </Step>
+  
+  <Step title="Daily Tracking">
+    Track medication intake in real-time, marking doses as taken and adding observations.
+  </Step>
+  
+  <Step title="Calendar Integration">
+    Sync with Google Calendar to receive reminders and view all care activities.
+  </Step>
+</Steps>
+
+## Platform Benefits
+
+### For Families
+
+- Reduce medication errors with clear tracking and reminders
+- Gain peace of mind knowing all caregivers are synchronized
+- Access care information from anywhere, anytime
+- Maintain comprehensive medication history
+
+### For Healthcare Providers
+
+- Monitor treatment adherence remotely
+- Receive accurate intake reports from families
+- Collaborate effectively with the care team
+- Make data-driven care decisions
+
+<Warning>
+  NexeCare is designed to assist with care management but does not replace professional medical advice. Always consult with healthcare providers for medical decisions.
+</Warning>
+
+## Get Started
+
+Ready to simplify your care management workflow? Check out our [Quickstart Guide](/quickstart) to set up your account and start tracking medications in minutes.
+
+## Technical Documentation
+
+For developers and technical users:
+
+- **Frontend Repository**: React + Vite application in `/frontend`
+- **Backend Repository**: Spring Boot application in `/backend`
+- **API Documentation**: RESTful endpoints for medications, treatments, and intake tracking
+- **Authentication**: Supabase with Google OAuth 2.0 integration
+
+<Note>
+  NexeCare is a collaboration between VelTech and Fundación Nexe, combining technological innovation with social purpose to improve lives.
+</Note>

@@ -1,0 +1,344 @@
+---
+title: "Calendar Sync Guide"
+description: "Connect Google Calendar to automatically sync appointments and medication reminders"
+---
+
+<Note>
+NexeCare integrates with Google Calendar to automatically create appointment events and send reminders, helping you stay on top of your child's care schedule.
+</Note>
+
+## Why Sync Your Calendar?
+
+Connecting Google Calendar provides several benefits:
+
+- **Automatic reminders** - Receive notifications before appointments
+- **Shared calendars** - Coordinate with co-caregivers and family members
+- **Device sync** - View appointments on your phone, tablet, and computer
+- **No manual entry** - Appointments created in NexeCare appear automatically
+- **Integration** - Works with other calendar apps that sync with Google Calendar
+
+## Prerequisites
+
+Before setting up calendar sync, ensure you have:
+
+<Accordion title="A Google Account">
+You need a Google account (Gmail) to use Google Calendar integration. If you don't have one, create a free account at [google.com/accounts](https://accounts.google.com).
+</Accordion>
+
+<Accordion title="Browser Access">
+Calendar sync setup must be completed in a web browser. You'll need to grant permissions to NexeCare to access your calendar.
+</Accordion>
+
+<Accordion title="Active NexeCare Account">
+You must be logged into NexeCare. The calendar sync is linked to your specific user account.
+</Accordion>
+
+## Setting Up Calendar Sync
+
+<Steps>
+  <Step title="Sign In with Google">
+    Click the **Iniciar Sesión** button in the top navigation bar. This initiates the Google OAuth flow.
+    
+    ```jsx Navbar.jsx
+    const handleGoogleSignIn = async () => {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin }
+      });
+      if (error) console.log("Error al iniciar sesión:", error.message);
+    };
+    ```
+    
+    This opens a Google sign-in window.
+  </Step>
+
+  <Step title="Choose Your Google Account">
+    Select the Google account you want to use with NexeCare. This should be the account associated with the calendar where you want appointments to appear.
+  </Step>
+
+  <Step title="Grant Calendar Permissions">
+    Google will ask you to grant NexeCare permission to:
+    - View your calendar events
+    - Create new calendar events
+    - Edit existing events created by NexeCare
+    
+    Click **Allow** to grant these permissions. Without calendar permissions, events won't sync.
+  </Step>
+
+  <Step title="Verify Connection">
+    After granting permissions, you'll be redirected back to NexeCare. You should see your email address displayed in the navigation bar, confirming you're signed in.
+    
+    The system stores your authentication token securely through Supabase:
+    
+    ```javascript
+    const session = useSession();
+    const provider_token = session?.provider_token;
+    ```
+  </Step>
+</Steps>
+
+## How Calendar Sync Works
+
+### Automatic Event Creation
+
+When you create an appointment in NexeCare, the system automatically:
+
+1. Formats the event with all details
+2. Sends it to Google Calendar API
+3. Creates the event in your primary calendar
+4. Returns confirmation to NexeCare
+
+Here's the implementation:
+
+```javascript createCalendarEvent.js
+export const createCalendarEvent = async (provider_token, start, end, name, description) => {
+  const event = {
+    summary: name,
+    description: description,
+    start: {
+      dateTime: start.toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+    end: {
+      dateTime: end.toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+  };
+
+  await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + provider_token,
+    },
+    body: JSON.stringify(event),
+  });
+
+  alert("Event created, check your calendar!");
+};
+```
+
+### Event Details
+
+Each calendar event includes:
+- **Summary** - The appointment name
+- **Description** - Additional details about the appointment
+- **Start time** - When the appointment begins
+- **End time** - When it concludes
+- **Time zone** - Automatically detected from your system
+
+### Retrieving Existing Events
+
+NexeCare can also fetch your existing calendar events to display them in the calendar view:
+
+```javascript getCalendarEvents.js
+export const getCalendarEvents = async (provider_token) => {
+  const events = await fetch(
+    "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+    {
+      headers: {
+        Authorization: "Bearer " + provider_token,
+      },
+    }
+  );
+  const data = await events.json();
+  return data.items;
+};
+```
+
+## Managing Synced Events
+
+### Viewing Synced Appointments
+
+Events created through NexeCare appear in:
+- Your Google Calendar (web, mobile apps)
+- The NexeCare calendar view
+- Any other apps synced with your Google Calendar
+
+### Editing Appointments
+
+You can edit appointments in two ways:
+
+1. **In NexeCare** - Changes sync to Google Calendar
+2. **In Google Calendar** - Changes appear in NexeCare on next refresh
+
+<Warning>
+If you edit an appointment in Google Calendar directly, refresh the NexeCare page to see the updated information.
+</Warning>
+
+### Deleting Appointments
+
+To remove a synced appointment:
+
+1. Delete it in NexeCare, or
+2. Delete it directly in Google Calendar
+
+Changes propagate between platforms automatically.
+
+## Time Zone Handling
+
+NexeCare automatically detects your system time zone:
+
+```javascript
+timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+```
+
+This ensures appointments appear at the correct local time, even if you travel or access NexeCare from different locations.
+
+<Tip>
+If you frequently travel between time zones, double-check appointment times after crossing zones. Google Calendar handles this automatically, but always verify critical appointments.
+</Tip>
+
+## Sharing Your Calendar
+
+### Sharing with Co-Caregivers
+
+To allow other caregivers to see your child's appointments:
+
+<Steps>
+  <Step title="Open Google Calendar Settings">
+    Go to [calendar.google.com](https://calendar.google.com) and click the gear icon → **Settings**.
+  </Step>
+
+  <Step title="Select Your Calendar">
+    In the left sidebar, click on the calendar you want to share (usually "Primary").
+  </Step>
+
+  <Step title="Share with Specific People">
+    Under "Share with specific people," click **Add people**.
+    
+    Enter the email addresses of co-caregivers and select their permission level:
+    - **See all event details** - They can view all appointment information
+    - **Make changes to events** - They can edit and create appointments
+  </Step>
+
+  <Step title="Send Invitation">
+    Click **Send**. The co-caregiver receives an email invitation to access your shared calendar.
+  </Step>
+</Steps>
+
+### Family Calendar Setup
+
+Consider creating a dedicated family calendar for your child's appointments:
+
+1. Create a new calendar in Google Calendar
+2. Name it "[Child's Name] Medical Schedule"
+3. Share it with all caregivers
+4. Have all family members use this calendar for NexeCare sync
+
+This keeps medical appointments separate from personal calendars while ensuring everyone stays informed.
+
+## Troubleshooting
+
+### Events Not Appearing in Google Calendar
+
+<Accordion title="Check Calendar Sync Permissions">
+Go to [myaccount.google.com/permissions](https://myaccount.google.com/permissions) and verify NexeCare has calendar access. If not, revoke and re-grant permissions.
+</Accordion>
+
+<Accordion title="Verify the Correct Calendar">
+NexeCare creates events in your "primary" Google Calendar. Check which calendar is set as primary in Google Calendar settings.
+</Accordion>
+
+<Accordion title="Wait for Sync">
+It may take a few moments for events to appear. Refresh your Google Calendar after 30-60 seconds.
+</Accordion>
+
+### "Authentication Error" Message
+
+<Accordion title="Token Expired">
+Authentication tokens expire periodically. Sign out of NexeCare and sign back in with Google to refresh your token.
+</Accordion>
+
+<Accordion title="Permissions Revoked">
+If you revoked calendar permissions in your Google account, you'll need to reconnect. Sign out and sign back in to re-authorize.
+</Accordion>
+
+### Duplicate Events
+
+<Accordion title="Avoid Creating Events Twice">
+If you create an appointment in both NexeCare and Google Calendar manually, you'll see duplicates. Create events in only one location.
+</Accordion>
+
+<Accordion title="Remove Duplicates">
+Delete duplicate events directly in Google Calendar. Keep the one with the most complete information.
+</Accordion>
+
+### Wrong Time Zone
+
+<Accordion title="Check System Time Zone">
+NexeCare uses your device's time zone setting. Verify your computer or phone has the correct time zone configured in system settings.
+</Accordion>
+
+<Accordion title="Google Calendar Time Zone">
+Check your Google Calendar time zone setting at [calendar.google.com/calendar/settings](https://calendar.google.com/calendar/r/settings). It should match your current location.
+</Accordion>
+
+## Best Practices
+
+<Tip>
+**Use Descriptive Names** - When creating appointments, use clear, descriptive names like "Dr. Smith - Cardiology Follow-up" instead of just "Doctor."
+</Tip>
+
+<Tip>
+**Include Details** - Use the description field to note the doctor's name, office location, phone number, and any preparation needed (e.g., "Bring medication list").
+</Tip>
+
+<Tip>
+**Set Reminders** - Configure Google Calendar to send email or mobile notifications 24 hours and 1 hour before appointments.
+</Tip>
+
+<Tip>
+**Regular Sync Checks** - Periodically verify that events are syncing correctly by creating a test appointment and checking both calendars.
+</Tip>
+
+## Privacy and Security
+
+### What NexeCare Can Access
+
+NexeCare requests minimal calendar permissions:
+- **Read** - View your calendar events
+- **Write** - Create and edit events
+
+NexeCare cannot:
+- Access your emails
+- View contacts
+- Access other Google services
+- Share your data with third parties
+
+### Revoking Access
+
+To disconnect Google Calendar:
+
+1. Go to [myaccount.google.com/permissions](https://myaccount.google.com/permissions)
+2. Find NexeCare in your connected apps
+3. Click **Remove access**
+
+Events already created will remain in your calendar, but new events won't sync until you reconnect.
+
+### Data Storage
+
+Calendar integration uses:
+- **Supabase authentication** - Securely manages your Google OAuth token
+- **Google Calendar API** - Events are stored in your Google account, not on NexeCare servers
+- **Session tokens** - Tokens are encrypted and stored securely
+
+<Info>
+Your calendar data never leaves Google's servers. NexeCare only sends create/read requests via the official Google Calendar API.
+</Info>
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Calendar Integration Feature" icon="calendar" href="/features/calendar-integration">
+    Technical details about calendar functionality
+  </Card>
+  <Card title="Parents & Caregivers Guide" icon="hand-holding-heart" href="/guides/parents-caregivers">
+    Complete guide for daily caregivers
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Initial setup and account creation
+  </Card>
+  <Card title="User Roles" icon="users" href="/features/user-roles">
+    Understanding access and permissions
+  </Card>
+</CardGroup>

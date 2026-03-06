@@ -1,0 +1,221 @@
+---
+title: "Guide for Parents & Caregivers"
+description: "Complete guide for daily caregivers managing medications and care schedules"
+---
+
+<Note>
+This guide is designed for parents, guardians, and daily caregivers who manage medication and care schedules for children with special needs.
+</Note>
+
+## Getting Started
+
+As a parent or caregiver, NexeCare helps you stay organized and ensure your child receives their medications on time. The platform provides an intuitive interface for tracking daily medications, viewing upcoming appointments, and coordinating with medical professionals.
+
+## Daily Workflow
+
+<Steps>
+  <Step title="Start Your Day">
+    Log in to NexeCare using your Google account. The dashboard shows today's medication schedule and upcoming appointments.
+    
+    ```jsx Navbar.jsx
+    const handleGoogleSignIn = async () => {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin }
+      });
+      if (error) console.log("Error al iniciar sesión:", error.message);
+    };
+    ```
+  </Step>
+
+  <Step title="Review Today's Medications">
+    The medication panel on the right side of your dashboard displays all medications for your child. Each medication shows its current status:
+    
+    - **Red badge ("No tomado")** - Medication not yet taken
+    - **Green badge ("Tomado")** - Medication completed
+    
+    Click the status button to toggle between taken and not taken as you administer medications throughout the day.
+  </Step>
+
+  <Step title="Mark Medications as Taken">
+    When you give your child a medication:
+    
+    1. Find the medication in your list
+    2. Click the status button to change from "No tomado" (red) to "Tomado" (green)
+    3. The system automatically records the time and your action
+    
+    The interface updates immediately, even if there's a temporary network issue - your changes are saved once connectivity is restored.
+  </Step>
+
+  <Step title="Check the Calendar">
+    View the full calendar on the left to see:
+    - Upcoming medical appointments
+    - Treatment schedules
+    - Therapy sessions
+    - Important care reminders
+  </Step>
+</Steps>
+
+## Managing Medications
+
+### Viewing Your Medication List
+
+Your medication panel displays all active medications with the following information:
+- Medication name
+- Current status (taken/not taken)
+- Action buttons for status updates and removal
+
+### Adding a New Medication
+
+When a doctor prescribes a new medication:
+
+<Steps>
+  <Step title="Open the Add Form">
+    In the medication panel, find the input field at the top labeled "Nombre de la medicación".
+  </Step>
+
+  <Step title="Enter Medication Details">
+    Type the exact name of the medication as prescribed by your doctor.
+  </Step>
+
+  <Step title="Submit">
+    Click the "Añadir" button. The medication immediately appears in your list with "No tomado" status.
+  </Step>
+</Steps>
+
+### Removing Discontinued Medications
+
+When a medication is no longer needed:
+
+1. Find the medication in your list
+2. Click the **Eliminar** button (gray button on the right)
+3. Confirm the removal
+
+The medication is removed from your daily checklist.
+
+## Understanding Appointments
+
+### Viewing Scheduled Appointments
+
+The appointments panel shows upcoming medical visits, including:
+- Doctor appointments
+- Therapy sessions (physical therapy, speech therapy, etc.)
+- Specialist consultations
+- Follow-up visits
+
+Each appointment displays:
+- **Name** - Type of appointment or provider name
+- **Date** - Scheduled date
+- **Time** - Appointment time
+
+### Adding New Appointments
+
+To add a medical appointment:
+
+<Steps>
+  <Step title="Fill the Appointment Form">
+    In the appointments panel, enter:
+    - **Nombre de la cita** - Appointment name (e.g., "Cita con el psicólogo")
+    - **Fecha** - Date in DD-MM format (e.g., "07-11")
+    - **Hora** - Time (e.g., "10:00 AM")
+  </Step>
+
+  <Step title="Save the Appointment">
+    Click **Guardar cita**. The appointment appears in both the appointments list and the calendar view.
+  </Step>
+</Steps>
+
+## Using the Calendar View
+
+### Monthly Overview
+
+The main calendar displays:
+- All scheduled appointments marked on their dates
+- Color-coded events for easy identification
+- Quick navigation between months
+
+### Day and Week Views
+
+Switch between different calendar views:
+- **Month view** - See the full month at a glance
+- **Week view** - Focus on the current week's schedule
+- **Day view** - Detailed view of a single day
+
+## Tips for Success
+
+<Accordion title="Set Up a Daily Routine">
+Check NexeCare first thing in the morning to review the day's medications and appointments. This helps you plan your day and ensures nothing is missed.
+</Accordion>
+
+<Accordion title="Update Status Immediately">
+Mark medications as taken right after administering them, not at the end of the day. This provides the most accurate record and prevents double-dosing.
+</Accordion>
+
+<Accordion title="Sync Your Calendar">
+Connect your Google Calendar to receive reminders and notifications for appointments. See the [Calendar Sync Guide](/guides/calendar-sync) for setup instructions.
+</Accordion>
+
+<Accordion title="Share Access with Co-Caregivers">
+If multiple people care for your child (e.g., both parents, a nurse), ensure everyone has access to NexeCare so medication tracking stays synchronized.
+</Accordion>
+
+<Accordion title="Review Medical Professional Notes">
+Check for any special instructions or notes from your child's medical team regarding medications or treatments.
+</Accordion>
+
+## Troubleshooting Common Issues
+
+### Medication Status Won't Update
+
+If clicking a status button doesn't change the medication status:
+
+1. **Check your internet connection** - Status updates require connectivity
+2. **Refresh the page** - Press F5 or click the refresh button
+3. **Log out and log back in** - Sometimes session refresh helps
+
+The system uses optimistic updates, so your clicks register immediately and sync when connectivity is restored.
+
+### Can't See New Medications
+
+If a medication added by your doctor doesn't appear:
+
+1. Refresh the page to load the latest data
+2. Check that you're viewing the correct child's profile
+3. Contact your medical professional to verify they added it correctly
+
+### Appointments Not Showing in Calendar
+
+If appointments don't appear on the calendar:
+
+1. Verify the date format is correct (DD-MM)
+2. Check that calendar sync is enabled (see [Calendar Sync](/guides/calendar-sync))
+3. Refresh the calendar view
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Calendar Sync" icon="arrows-rotate" href="/guides/calendar-sync">
+    Connect Google Calendar for automatic reminders
+  </Card>
+  <Card title="Treatment Tracking" icon="calendar-check" href="/features/treatment-tracking">
+    Learn about treatment plans and schedules
+  </Card>
+  <Card title="Medication Management" icon="pills" href="/features/medication-management">
+    Deep dive into medication features
+  </Card>
+  <Card title="Medical Professionals Guide" icon="user-doctor" href="/guides/medical-professionals">
+    Share this guide with your child's healthcare team
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+If you have questions or need assistance:
+
+- Review the [Quick Start Guide](/quickstart) for basic setup
+- Check the [Core Features](/features/medication-management) documentation
+- Contact your medical professional for treatment-specific questions
+
+<Warning>
+NexeCare is a management tool and does not replace medical advice. Always follow your doctor's instructions and contact your healthcare provider with medical concerns.
+</Warning>

@@ -1,0 +1,110 @@
+---
+title: 'Create Treatment'
+api: 'POST /treatments'
+description: 'Create a new treatment record'
+---
+
+Create a new treatment assignment for a child.
+
+## Endpoint
+
+```
+POST /treatments
+```
+
+## Request Body
+
+<ParamField body="childId" type="integer" required>
+  ID of the child receiving the treatment
+</ParamField>
+
+<ParamField body="medicationId" type="integer" required>
+  ID of the medication to be used in the treatment
+</ParamField>
+
+<ParamField body="startDate" type="date" required>
+  Date when the treatment begins (ISO 8601 format)
+</ParamField>
+
+<ParamField body="endDate" type="date" required>
+  Date when the treatment ends (ISO 8601 format)
+</ParamField>
+
+<ParamField body="specificDose" type="integer" required>
+  Specific dose amount for this treatment (in the medication's dose unit)
+</ParamField>
+
+<ParamField body="instructions" type="string" required>
+  Additional instructions for administering the treatment
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="integer">
+  Unique identifier for the newly created treatment
+</ResponseField>
+
+<ResponseField name="childId" type="integer">
+  ID of the child receiving the treatment
+</ResponseField>
+
+<ResponseField name="medicationId" type="integer">
+  ID of the medication used in the treatment
+</ResponseField>
+
+<ResponseField name="startDate" type="date">
+  Date when the treatment begins
+</ResponseField>
+
+<ResponseField name="endDate" type="date">
+  Date when the treatment ends
+</ResponseField>
+
+<ResponseField name="specificDose" type="integer">
+  Specific dose amount for this treatment
+</ResponseField>
+
+<ResponseField name="instructions" type="string">
+  Additional instructions for administering the treatment
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X POST http://localhost:8080/treatments \
+  -H "Content-Type: application/json" \
+  -d '{
+    "childId": 5,
+    "medicationId": 1,
+    "startDate": "2026-03-06T00:00:00.000Z",
+    "endDate": "2026-03-20T00:00:00.000Z",
+    "specificDose": 250,
+    "instructions": "Take with food. Do not exceed 3 doses per day."
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "id": 3,
+  "childId": 5,
+  "medicationId": 1,
+  "startDate": "2026-03-06T00:00:00.000+00:00",
+  "endDate": "2026-03-20T00:00:00.000+00:00",
+  "specificDose": 250,
+  "instructions": "Take with food. Do not exceed 3 doses per day."
+}
+```
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Treatment created successfully |
+
+## Related Endpoints
+
+- [List Treatments](/api/treatments/list)
+- [Update Treatment](/api/treatments/update)
+- [Delete Treatment](/api/treatments/delete)

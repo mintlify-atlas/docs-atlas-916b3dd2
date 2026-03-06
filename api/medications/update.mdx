@@ -1,0 +1,135 @@
+---
+title: 'Update Medication'
+api: 'PUT /medication/{id}'
+description: 'Update an existing medication record'
+---
+
+Update the details of an existing medication in the inventory.
+
+## Endpoint
+
+```
+PUT /medication/{id}
+```
+
+## Path Parameters
+
+<ParamField path="id" type="integer" required>
+  The unique identifier of the medication to update
+</ParamField>
+
+## Request Body
+
+<ParamField body="nameMedication" type="string" required>
+  Name of the medication
+</ParamField>
+
+<ParamField body="doseUnit" type="string" required>
+  Unit of measurement for the dose (e.g., "mg", "ml", "tablets")
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Type or category of medication (e.g., "Analgesic", "Antibiotic")
+</ParamField>
+
+<ParamField body="frequency" type="string" required>
+  Recommended frequency of administration (e.g., "Every 6 hours", "Daily")
+</ParamField>
+
+<ParamField body="minStock" type="integer" required>
+  Minimum stock level threshold for alerts
+</ParamField>
+
+<ParamField body="stock" type="integer" required>
+  Current stock quantity
+</ParamField>
+
+<ParamField body="createdAt" type="date" optional>
+  Timestamp when the medication was created
+</ParamField>
+
+<ParamField body="updatedAt" type="date" optional>
+  Timestamp when the medication was last updated (auto-updated)
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="integer">
+  Unique identifier for the medication
+</ResponseField>
+
+<ResponseField name="nameMedication" type="string">
+  Name of the medication
+</ResponseField>
+
+<ResponseField name="doseUnit" type="string">
+  Unit of measurement for the dose
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  Type or category of medication
+</ResponseField>
+
+<ResponseField name="frequency" type="string">
+  Recommended frequency of administration
+</ResponseField>
+
+<ResponseField name="minStock" type="integer">
+  Minimum stock level threshold
+</ResponseField>
+
+<ResponseField name="stock" type="integer">
+  Current stock quantity
+</ResponseField>
+
+<ResponseField name="createdAt" type="date">
+  Timestamp when the medication was created
+</ResponseField>
+
+<ResponseField name="updatedAt" type="date">
+  Timestamp when the medication was last updated
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X PUT http://localhost:8080/medication/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nameMedication": "Paracetamol",
+    "doseUnit": "mg",
+    "type": "Analgesic",
+    "frequency": "Every 6 hours",
+    "minStock": 20,
+    "stock": 120
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "id": 1,
+  "nameMedication": "Paracetamol",
+  "doseUnit": "mg",
+  "type": "Analgesic",
+  "frequency": "Every 6 hours",
+  "minStock": 20,
+  "stock": 120,
+  "createdAt": "2026-01-15T10:30:00.000+00:00",
+  "updatedAt": "2026-03-06T11:45:00.000+00:00"
+}
+```
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Medication updated successfully |
+| `404` | Medication with specified ID not found |
+
+## Related Endpoints
+
+- [List Medications](/api/medications/list)
+- [Create Medication](/api/medications/create)
+- [Delete Medication](/api/medications/delete)

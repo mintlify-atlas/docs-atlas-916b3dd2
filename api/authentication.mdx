@@ -1,0 +1,68 @@
+---
+title: 'Authentication'
+description: 'How authentication works in NexeCare'
+---
+
+## Authentication Overview
+
+NexeCare uses Supabase for user authentication and session management.
+
+## Current Implementation
+
+The backend REST API controllers currently do not enforce authentication at the endpoint level. Authentication is managed on the frontend using Supabase session tokens.
+
+### Frontend Authentication
+
+The frontend application integrates with Supabase to:
+- Authenticate users via email/password
+- Manage user sessions
+- Store session tokens
+- Redirect unauthenticated users to login
+
+### Session Tokens
+
+When a user logs in through the frontend:
+1. Supabase authenticates the user credentials
+2. A session token is generated and stored
+3. The token is maintained for subsequent requests
+4. Token expiration triggers re-authentication
+
+## Future Considerations
+
+For production deployment, consider:
+- Adding authentication middleware to Spring Boot controllers
+- Validating Supabase JWT tokens on the backend
+- Implementing role-based access control (RBAC)
+- Adding API key authentication for service-to-service calls
+
+## Security Best Practices
+
+- Always use HTTPS in production
+- Store tokens securely (never in local storage for sensitive data)
+- Implement token refresh mechanisms
+- Use short-lived access tokens
+- Log authentication attempts and failures
+
+## Example: Frontend Auth Flow
+
+The frontend authenticates using Supabase:
+
+```javascript
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+// Sign in
+const { data, error } = await supabase.auth.signInWithPassword({
+  email: 'user@example.com',
+  password: 'password'
+})
+
+// Get session
+const session = await supabase.auth.getSession()
+```
+
+## Related Documentation
+
+- [Supabase Auth Documentation](https://supabase.com/docs/guides/auth)
+- [API Overview](/api/overview)

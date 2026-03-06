@@ -1,0 +1,97 @@
+---
+title: 'List Take Records'
+api: 'GET /take/{treatmentId}'
+description: 'Retrieve take records for a specific treatment'
+---
+
+Retrieve all medication administration records (takes) for a specific treatment.
+
+## Endpoint
+
+```
+GET /take/{treatmentId}
+```
+
+## Path Parameters
+
+<ParamField path="treatmentId" type="integer" required>
+  The ID of the treatment to retrieve take records for
+</ParamField>
+
+## Response
+
+<ResponseField name="takes" type="array">
+  Array of take record objects
+  
+  <ResponseField name="id" type="integer">
+    Unique identifier for the take record
+  </ResponseField>
+  
+  <ResponseField name="treatmentId" type="integer">
+    ID of the associated treatment
+  </ResponseField>
+  
+  <ResponseField name="registratorId" type="integer">
+    ID of the person who registered the take
+  </ResponseField>
+  
+  <ResponseField name="date" type="date">
+    Timestamp when the medication was taken
+  </ResponseField>
+  
+  <ResponseField name="takeSuccess" type="boolean">
+    Whether the medication was successfully administered
+  </ResponseField>
+  
+  <ResponseField name="observations" type="string">
+    Additional notes or observations about the take
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+```bash
+curl -X GET http://localhost:8080/take/1
+```
+
+## Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "treatmentId": 1,
+    "registratorId": 10,
+    "date": "2026-03-06T08:00:00.000+00:00",
+    "takeSuccess": true,
+    "observations": "Child took medication without issues."
+  },
+  {
+    "id": 2,
+    "treatmentId": 1,
+    "registratorId": 12,
+    "date": "2026-03-06T14:00:00.000+00:00",
+    "takeSuccess": true,
+    "observations": "Administered with lunch."
+  },
+  {
+    "id": 3,
+    "treatmentId": 1,
+    "registratorId": 10,
+    "date": "2026-03-06T20:00:00.000+00:00",
+    "takeSuccess": false,
+    "observations": "Child refused medication. Will retry later."
+  }
+]
+```
+
+## Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Successfully retrieved take records (may be empty array) |
+
+## Related Endpoints
+
+- [Create Take Record](/api/take-records/create)
+- [Update Take Record](/api/take-records/update)

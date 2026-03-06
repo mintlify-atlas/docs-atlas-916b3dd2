@@ -1,0 +1,371 @@
+---
+title: User Roles & Permissions
+description: Understanding the three user types and relationship management in NexeCare
+---
+
+## Overview
+
+NexeCare has three distinct user roles, each with specific permissions and responsibilities. The system uses a flexible relationship model to connect caregivers (Tutors) with children they care for.
+
+## User Types
+
+<CardGroup cols={3}>
+  <Card title="Child" icon="child" color="#ea5a0c">
+    The individual receiving care and medications
+  </Card>
+  <Card title="Tutor" icon="user-group" color="#0285c7">
+    Parents, guardians, or caregivers managing child care
+  </Card>
+  <Card title="Professional" icon="user-doctor" color="#16a34a">
+    Medical professionals providing healthcare services
+  </Card>
+</CardGroup>
+
+## Child
+
+Children are the primary subjects of care in the system. Each child profile contains:
+
+```java
+@Entity
+public class Child {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    
+    private String name;
+    private String surname;
+    private String address;
+    private String img_profile;  // Profile picture URL
+}
+```
+
+### Child Capabilities
+
+- Linked to multiple treatments and medications
+- Associated with one or more tutors (caregivers)
+- Have medication administration history tracked
+- Profile includes basic demographic information
+
+<Note>
+Children cannot directly access the system - all interactions are managed by Tutors or Professionals on their behalf.
+</Note>
+
+## Tutor (Caregiver)
+
+Tutors are parents, guardians, or designated caregivers responsible for managing a child's care:
+
+```java
+@Entity
+public class Tutor {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    
+    private String name;
+    private String surname;
+    private String phone;
+    private String email;
+    private String address;
+    private String img_profile;  // Profile picture URL
+}
+```
+
+### Tutor Responsibilities
+
+<AccordionGroup>
+  <Accordion title="Medication Management">
+    - Add and update medications in the system
+    - Track medication inventory and stock levels
+    - Record when medications are administered
+    - Monitor medication status (taken/not taken)
+  </Accordion>
+  
+  <Accordion title="Treatment Oversight">
+    - Create and manage treatment plans
+    - Link treatments to children in their care
+    - Update dosing instructions and schedules
+    - Review treatment compliance history
+  </Accordion>
+  
+  <Accordion title="Calendar Management">
+    - Schedule medical appointments
+    - Create medication reminders
+    - Sync with Google Calendar
+    - Coordinate care schedules with other tutors
+  </Accordion>
+  
+  <Accordion title="Record Keeping">
+    - Log medication administration (take records)
+    - Document observations and side effects
+    - Maintain accurate care history
+    - Share updates with professionals
+  </Accordion>
+</AccordionGroup>
+
+## Professional
+
+Professionals are medical staff such as doctors, nurses, or therapists:
+
+```java
+@Entity
+public class Professional {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    
+    private String name;
+    private String surname;
+    private String phone;
+    private String email;
+    private String address;
+    private String position;     // e.g., "Pediatrician", "Nurse"
+    private String img_profile;  // Profile picture URL
+}
+```
+
+### Professional Capabilities
+
+- **Prescribe Medications**: Create medication entries with clinical details
+- **Review Treatment History**: Access complete medication administration logs
+- **Monitor Compliance**: Track adherence to treatment plans
+- **Coordinate Care**: Communicate with tutors about treatment adjustments
+- **Clinical Documentation**: Add medical notes and observations
+
+<Info>
+The `position` field identifies the professional's role (e.g., "Pediatrician", "Physical Therapist"), helping tutors understand their area of expertise.
+</Info>
+
+## Tutor-Child Relationships
+
+The `Tutor_Relation` entity creates flexible connections between tutors and children:
+
+```java
+@Entity
+public class Tutor_Relation {
+    @EmbeddedId
+    private Tutor_Relation_Id id;  // Composite key
+    
+    private String relation_type;  // e.g., "mother", "father", "guardian"
+    private Boolean main_contact;  // Primary caregiver flag
+}
+```
+
+### Composite Key Structure
+
+```java
+@Embeddable
+public class Tutor_Relation_Id implements Serializable {
+    private int id_child;  // Child ID
+    private int id_tutor;  // Tutor ID
+}
+```
+
+### Relationship Features
+
+<CardGroup cols={2}>
+  <Card title="Multiple Caregivers" icon="users">
+    A child can have multiple tutors (both parents, grandparents, etc.)
+  </Card>
+  
+  <Card title="Multiple Children" icon="children">
+    A tutor can care for multiple children (siblings, multiple dependents)
+  </Card>
+  
+  <Card title="Relationship Types" icon="heart">
+    Define the specific relationship (mother, father, guardian, foster parent)
+  </Card>
+  
+  <Card title="Main Contact" icon="star">
+    Designate a primary caregiver for important communications
+  </Card>
+</CardGroup>
+
+### Example Relationships
+
+```javascript
+// Mother as main contact
+{
+  id_child: 1,
+  id_tutor: 5,
+  relation_type: "mother",
+  main_contact: true
+}
+
+// Father as secondary contact
+{
+  id_child: 1,
+  id_tutor: 6,
+  relation_type: "father",
+  main_contact: false
+}
+
+// Grandmother helping with care
+{
+  id_child: 1,
+  id_tutor: 7,
+  relation_type: "grandmother",
+  main_contact: false
+}
+```
+
+## Permission Matrix
+
+| Action | Child | Tutor | Professional |
+|--------|-------|-------|-------------|
+| View own profile | ❌ | ✅ | ✅ |
+| View child profiles | N/A | ✅ (linked only) | ✅ (all patients) |
+| Add medications | ❌ | ✅ | ✅ |
+| Create treatments | ❌ | ✅ | ✅ |
+| Record medication takes | ❌ | ✅ | ✅ |
+| Delete take records | ❌ | ✅ | ✅ |
+| Manage calendar events | ❌ | ✅ | ✅ |
+| View treatment history | ❌ | ✅ (linked children) | ✅ (all patients) |
+| Prescribe medications | ❌ | ❌ | ✅ |
+
+<Warning>
+Tutors can only access data for children they are explicitly linked to via `Tutor_Relation` records. This ensures proper data privacy.
+</Warning>
+
+## Access Control Implementation
+
+When querying data, always filter by user relationships:
+
+### Tutor Access Example
+
+```sql
+-- Get all children for a tutor
+SELECT c.* 
+FROM Child c
+INNER JOIN Tutor_Relation tr ON c.id = tr.id_child
+WHERE tr.id_tutor = ?;
+
+-- Get treatments for tutor's children
+SELECT t.* 
+FROM Treatment t
+INNER JOIN Tutor_Relation tr ON t.id_child = tr.id_child
+WHERE tr.id_tutor = ?;
+```
+
+### Professional Access Example
+
+```sql
+-- Professionals can access all children and treatments
+SELECT * FROM Child;
+SELECT * FROM Treatment;
+```
+
+## Main Contact Logic
+
+The `main_contact` flag helps prioritize communications:
+
+```javascript
+// Get primary caregiver for a child
+const getMainContact = async (childId) => {
+  const relations = await fetch(
+    `/api/tutor-relations?childId=${childId}`
+  ).then(r => r.json());
+  
+  const mainContact = relations.find(r => r.main_contact === true);
+  return mainContact || relations[0]; // Fallback to first tutor
+};
+
+// Send notification to main contact
+const notifyMainContact = async (childId, message) => {
+  const mainTutor = await getMainContact(childId);
+  await sendNotification(mainTutor.id_tutor, message);
+};
+```
+
+<Info>
+If no main contact is explicitly set, the system should default to the first linked tutor or prompt for designation.
+</Info>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Relationship Management">
+    - Always designate at least one `main_contact` per child
+    - Update relationships when custody or care arrangements change
+    - Use descriptive `relation_type` values consistently
+    - Don't delete tutor relations without transferring responsibility
+  </Accordion>
+  
+  <Accordion title="Data Access">
+    - Implement row-level security based on tutor-child relationships
+    - Log all access to child records for audit trails
+    - Verify tutor permissions before displaying sensitive data
+    - Cache relationship checks to avoid repeated database queries
+  </Accordion>
+  
+  <Accordion title="User Experience">
+    - Show tutors only the children they're linked to
+    - Display relationship type to provide context
+    - Highlight the main contact in UI lists
+    - Allow easy switching between multiple children
+  </Accordion>
+  
+  <Accordion title="Professional Workflow">
+    - Clearly identify the main contact for each patient
+    - Allow professionals to view all tutor relationships
+    - Enable professionals to suggest medication changes
+    - Provide professionals read-only access to take records
+  </Accordion>
+</AccordionGroup>
+
+## Implementation Example
+
+### Creating a Tutor-Child Relationship
+
+```java
+// Create composite key
+Tutor_Relation_Id relationId = new Tutor_Relation_Id();
+relationId.setId_child(childId);
+relationId.setId_tutor(tutorId);
+
+// Create relationship
+Tutor_Relation relation = new Tutor_Relation();
+relation.setId(relationId);
+relation.setRelation_type("mother");
+relation.setMain_contact(true);
+
+// Save to database
+relationRepository.save(relation);
+```
+
+### Frontend User Context
+
+```javascript
+const UserContext = createContext();
+
+const UserProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [userType, setUserType] = useState(null); // 'tutor' or 'professional'
+  const [linkedChildren, setLinkedChildren] = useState([]);
+  
+  useEffect(() => {
+    if (user && userType === 'tutor') {
+      // Fetch linked children
+      fetch(`/api/tutors/${user.id}/children`)
+        .then(r => r.json())
+        .then(setLinkedChildren);
+    }
+  }, [user, userType]);
+  
+  return (
+    <UserContext.Provider value={{ user, userType, linkedChildren }}>
+      {children}
+    </UserContext.Provider>
+  );
+};
+```
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Treatment Tracking" icon="clipboard-list" href="/features/treatment-tracking">
+    Learn how tutors and professionals manage treatment plans
+  </Card>
+  <Card title="Medication Management" icon="pills" href="/features/medication-management">
+    Understand medication tracking workflows by user role
+  </Card>
+</CardGroup>

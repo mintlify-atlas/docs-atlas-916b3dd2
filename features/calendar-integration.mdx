@@ -1,0 +1,374 @@
+---
+title: Calendar Integration
+description: Sync appointments and medication reminders with Google Calendar using Supabase authentication
+---
+
+## Overview
+
+NexeCare integrates with Google Calendar to help caregivers manage appointments and medication schedules. The integration uses Supabase Auth with Google OAuth to securely access calendar data.
+
+## Authentication Flow
+
+The calendar integration requires users to authenticate with Google via Supabase:
+
+<Steps>
+  <Step title="User Login">
+    User signs in through Supabase Auth with Google OAuth provider
+  </Step>
+  
+  <Step title="Provider Token">
+    Supabase returns a session containing `provider_token` for Google API access
+  </Step>
+  
+  <Step title="API Requests">
+    Use the `provider_token` as a Bearer token for Google Calendar API calls
+  </Step>
+</Steps>
+
+<Info>
+The `session.provider_token` is a Google OAuth token that allows API access without additional authentication steps.
+</Info>
+
+## Creating Calendar Events
+
+The `createCalendarEvent` function creates appointments in Google Calendar:
+
+```javascript
+export async function createCalendarEvent(
+  session,
+  eventName,
+  eventDescription,
+  start,
+  end,
+  setEvents
+) {
+  const event = {
+    summary: eventName,
+    description: eventDescription,
+    start: {
+      dateTime: start.toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+    end: {
+      dateTime: end.toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+  };
+
+  try {
+    const res = await fetch("/auth/v1/calendar/v3/calendars/primary/events", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + session.provider_token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(event),
+    });
+
+    const data = await res.json();
+    alert("Evento creado, revisa tu Google Calendar!!");
+
+    // Refresh calendar view
+    getCalendarEvents(session, setEvents);
+  } catch (error) {
+    console.error("Error al crear evento:", error);
+  }
+}
+```
+
+### Parameters
+
+<ParamField path="session" type="object" required>
+  Supabase session object containing `provider_token` for Google API authentication
+</ParamField>
+
+<ParamField path="eventName" type="string" required>
+  The title/summary of the calendar event
+</ParamField>
+
+<ParamField path="eventDescription" type="string">
+  Detailed description of the appointment or medication details
+</ParamField>
+
+<ParamField path="start" type="Date" required>
+  JavaScript Date object for event start time
+</ParamField>
+
+<ParamField path="end" type="Date" required>
+  JavaScript Date object for event end time
+</ParamField>
+
+<ParamField path="setEvents" type="function" required>
+  React state setter function to update calendar view after creation
+</ParamField>
+
+### Usage Example
+
+```javascript
+import { createCalendarEvent } from './components/createCalendarEvent';
+
+const scheduleAppointment = async () => {
+  const startTime = new Date('2026-03-10T14:00:00');
+  const endTime = new Date('2026-03-10T15:00:00');
+  
+  await createCalendarEvent(
+    session,
+    "Dr. Smith Checkup",
+    "Annual physical examination for Emma",
+    startTime,
+    endTime,
+    setCalendarEvents
+  );
+};
+```
+
+## Fetching Calendar Events
+
+The `getCalendarEvents` function retrieves existing calendar events:
+
+```javascript
+export async function getCalendarEvents(session, setEvents) {
+  try {
+    const res = await fetch("/auth/v1/calendar/v3/calendars/primary/events", {
+      headers: {
+        Authorization: "Bearer " + session.provider_token,
+      },
+    });
+
+    const data = await res.json();
+
+    // Transform Google Calendar format to FullCalendar format
+    const fullCalendarEvents = data.items.map((ev) => ({
+      title: ev.summary,
+      start: ev.start.dateTime || ev.start.date,
+      end: ev.end.dateTime || ev.end.date,
+    }));
+
+    setEvents(fullCalendarEvents);
+  } catch (error) {
+    console.error("Error al obtener eventos:", error);
+  }
+}
+```
+
+<Note>
+The function automatically handles both timed events (`dateTime`) and all-day events (`date`) from Google Calendar.
+</Note>
+
+### Parameters
+
+<ParamField path="session" type="object" required>
+  Supabase session object with Google OAuth token
+</ParamField>
+
+<ParamField path="setEvents" type="function" required>
+  React state setter to update the calendar view with fetched events
+</ParamField>
+
+### Usage Example
+
+```javascript
+import { getCalendarEvents } from './components/getCalendarEvents';
+import { useEffect, useState } from 'react';
+
+const CalendarView = ({ session }) => {
+  const [events, setEvents] = useState([]);
+  
+  useEffect(() => {
+    if (session?.provider_token) {
+      getCalendarEvents(session, setEvents);
+    }
+  }, [session]);
+  
+  return (
+    <FullCalendar
+      events={events}
+      // ... other props
+    />
+  );
+};
+```
+
+## API Endpoint Structure
+
+The calendar integration uses Supabase as a proxy to Google Calendar API:
+
+```
+/auth/v1/calendar/v3/calendars/primary/events
+```
+
+This maps to Google's Calendar API:
+
+```
+https://www.googleapis.com/calendar/v3/calendars/primary/events
+```
+
+<Info>
+Supabase automatically handles the OAuth flow and token refresh, simplifying the integration.
+</Info>
+
+## Timezone Handling
+
+The integration automatically detects and uses the user's local timezone:
+
+```javascript
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+```
+
+This ensures events are created in the correct timezone for each user.
+
+## Common Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Medical Appointments" icon="stethoscope">
+    Schedule doctor visits, therapy sessions, and specialist consultations
+  </Card>
+  
+  <Card title="Medication Reminders" icon="bell">
+    Create recurring events for medication administration times
+  </Card>
+  
+  <Card title="Treatment Milestones" icon="flag-checkered">
+    Mark important dates like treatment start/end or follow-up appointments
+  </Card>
+  
+  <Card title="Care Coordination" icon="users">
+    Share appointment schedules with family members and caregivers
+  </Card>
+</CardGroup>
+
+## Implementation Guide
+
+### Step 1: Configure Supabase Auth
+
+<Steps>
+  <Step title="Enable Google Provider">
+    In your Supabase project, enable Google OAuth under Authentication > Providers
+  </Step>
+  
+  <Step title="Set Scopes">
+    Add the Google Calendar scope: `https://www.googleapis.com/auth/calendar`
+  </Step>
+  
+  <Step title="Configure OAuth">
+    Add authorized redirect URIs in Google Cloud Console
+  </Step>
+</Steps>
+
+### Step 2: Implement Sign In
+
+```javascript
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const signInWithGoogle = async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      scopes: 'https://www.googleapis.com/auth/calendar'
+    }
+  });
+};
+```
+
+### Step 3: Access Session Token
+
+```javascript
+const { data: { session } } = await supabase.auth.getSession();
+
+if (session?.provider_token) {
+  // Ready to make calendar API calls
+}
+```
+
+### Step 4: Use Calendar Functions
+
+```javascript
+import { createCalendarEvent, getCalendarEvents } from './components';
+
+// Fetch existing events
+await getCalendarEvents(session, setEvents);
+
+// Create new event
+await createCalendarEvent(
+  session,
+  "Medication Time",
+  "Take 500mg Aspirin with food",
+  new Date('2026-03-06T08:00:00'),
+  new Date('2026-03-06T08:15:00'),
+  setEvents
+);
+```
+
+## Error Handling
+
+<AccordionGroup>
+  <Accordion title="Authentication Errors">
+    **Problem:** User hasn't granted calendar permissions
+    
+    **Solution:** Re-initiate OAuth flow with explicit calendar scope request
+    
+    ```javascript
+    if (error?.message?.includes('permission')) {
+      // Prompt user to re-authenticate
+      await signInWithGoogle();
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Token Expiration">
+    **Problem:** Provider token has expired
+    
+    **Solution:** Supabase automatically refreshes tokens. Retry the request:
+    
+    ```javascript
+    try {
+      await createCalendarEvent(...);
+    } catch (error) {
+      // Refresh session and retry
+      const { data } = await supabase.auth.refreshSession();
+      await createCalendarEvent(...);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="API Rate Limits">
+    **Problem:** Too many requests to Google Calendar API
+    
+    **Solution:** Implement request throttling and caching:
+    
+    ```javascript
+    // Cache events locally
+    const cachedEvents = localStorage.getItem('calendar_events');
+    if (cachedEvents && Date.now() - lastFetch < 60000) {
+      return JSON.parse(cachedEvents);
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+Never expose the `provider_token` in client-side code or logs. It grants full access to the user's Google Calendar.
+</Warning>
+
+## Best Practices
+
+1. **Always check for session** before making calendar API calls
+2. **Handle timezone conversions** explicitly to avoid scheduling errors
+3. **Refresh the calendar view** after creating/updating events
+4. **Implement retry logic** for network failures
+5. **Cache calendar data** to reduce API calls and improve performance
+6. **Validate date ranges** before creating events
+7. **Provide user feedback** for successful event creation
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Treatment Tracking" icon="clipboard-list" href="/features/treatment-tracking">
+    Link calendar events to treatment schedules
+  </Card>
+  <Card title="Medication Management" icon="pills" href="/features/medication-management">
+    Create reminders based on medication schedules
+  </Card>
+</CardGroup>
